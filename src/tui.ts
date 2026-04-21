@@ -64,6 +64,7 @@ class CompanionTui {
   private snapshot?: SystemSnapshot;
   private snapshotError?: string;
   private currentTaskId?: string;
+  private currentTaskStartedAt?: number;
   private lastResults: TaskResult[] = [];
   private abortController?: AbortController;
   private fastfetchVisible = false;
@@ -152,7 +153,7 @@ class CompanionTui {
 
     setInterval(() => {
       this.spinnerIndex = (this.spinnerIndex + 1) % this.spinnerFrames.length;
-      if (this.snapshotLoading || this.fastfetchLoading) {
+      if (this.snapshotLoading || this.fastfetchLoading || this.mode === "running") {
         this.render();
       }
     }, 120).unref();
@@ -416,6 +417,7 @@ class CompanionTui {
 
     this.logs = [];
     this.currentTaskId = undefined;
+    this.currentTaskStartedAt = undefined;
     this.lastResults = [];
     this.mode = "running";
     this.statusMessage = "Running selected update steps...";
@@ -444,6 +446,7 @@ class CompanionTui {
     switch (event.type) {
       case "task-start":
         this.currentTaskId = event.task.id;
+        this.currentTaskStartedAt = Date.now();
         this.appendLog(`$ ${event.task.commandLabel}`);
         this.findRow(event.task.id).status = "running";
         break;
@@ -460,11 +463,14 @@ class CompanionTui {
         } else {
           this.appendLog(`+ ${event.task.title} finished in ${formatDuration(event.durationMs)}`);
         }
+        this.currentTaskId = undefined;
+        this.currentTaskStartedAt = undefined;
         break;
       }
       case "run-finish":
         this.lastResults = event.results;
         this.currentTaskId = undefined;
+        this.currentTaskStartedAt = undefined;
         break;
     }
   }
@@ -655,7 +661,7 @@ class CompanionTui {
     let lines: string[];
     switch (this.mode) {
       case "running":
-        lines = this.getRunningLines(innerWidth);
+        lines = this.getRunningLines(innerWidth, maxLines);
         break;
       case "done":
         lines = this.getSummaryLines(innerWidth);
@@ -695,8 +701,8 @@ class CompanionTui {
     return lines;
   }
 
-  private getRunningLines(innerWidth: number): string[] {
-    const lines = [
+  private getRunningLines(innerWidth: number, maxLines: number): string[] {
+    const headerLines = [
       ...formatLabelValue(
         "Progress",
         `${this.rows.filter((row) => row.status === "success" || row.status === "failed" || row.status === "cancelled").length} / ${this.rows.filter((row) => row.selected && row.state.availability.available).length} complete`,
@@ -706,21 +712,27 @@ class CompanionTui {
 
     if (this.currentTaskId) {
       const row = this.findRow(this.currentTaskId);
-      lines.push(...formatLabelValue("Current", row.state.definition.title, innerWidth));
+      headerLines.push(...formatLabelValue("Current", row.state.definition.title, innerWidth));
+
+      if (this.currentTaskStartedAt) {
+        const elapsedMs = Date.now() - this.currentTaskStartedAt;
+        const activity = `${this.spinnerFrames[this.spinnerIndex]} still running (${formatDuration(elapsedMs)})`;
+        headerLines.push(...formatLabelValue("Activity", activity, innerWidth));
+      }
     }
 
-    lines.push("");
+    const footerLines = ["", this.tagFg(this.statusMessage, palette.muted)];
+    const maxLogLines = Math.max(1, maxLines - headerLines.length - footerLines.length - 1);
+    const visibleLogs = this.logs.slice(-maxLogLines);
 
-    const visibleLogs = this.logs.slice(-Math.max(1, innerWidth));
-    if (visibleLogs.length === 0) {
-      lines.push(this.tagFg("Waiting for command output...", palette.muted));
-    } else {
-      lines.push(...visibleLogs.map((line) => truncate(line, innerWidth)));
-    }
-
-    lines.push("");
-    lines.push(this.tagFg(this.statusMessage, palette.muted));
-    return lines;
+    return [
+      ...headerLines,
+      "",
+      ...(visibleLogs.length === 0
+        ? [this.tagFg("Waiting for command output...", palette.muted)]
+        : visibleLogs.map((line) => truncate(line, innerWidth))),
+      ...footerLines
+    ];
   }
 
   private getSummaryLines(innerWidth: number): string[] {

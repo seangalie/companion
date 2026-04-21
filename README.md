@@ -21,10 +21,10 @@ The default queue mirrors some common maintenance commands:
 - `composer global update`
 - individual `docker` container updates
 
-The TUI adds a live system snapshot, selectable tasks, and a running log so you
-can see each step without keeping a long shell one-liner around.  Press `f`
-inside the console to open a full-screen system details view powered by
-`fastfetch`.
+The TUI adds a live system snapshot, selectable tasks, a running log, and a
+live activity indicator so you can see each step without keeping a long shell
+one-liner around. Press `f` inside the console to open a full-screen system
+details view powered by `fastfetch`.
 
 ## Install
 
@@ -62,9 +62,10 @@ companion -l --list-tasks
 
 - Some update commands may require elevated privileges depending on the machine state and the packages being updated.
 - `companion --auto` is useful when you want the same task catalog without the TUI.
-- Unavailable tools such as `brew` or `npm` are detected and clearly marked in the interface.
+- Unavailable tools such as `brew`, `npm`, or `mas` are detected and clearly marked in the interface.
 - `fastfetch` is optional. If it is installed, press `f` in the TUI to open a full-screen hardware and system details view.
 - The Docker task refreshes images for currently running containers and reports that those containers should be recreated if the pulled image changed.
+- Docker refresh is only available when the Docker CLI is installed and the Docker daemon is running.
 
 ## License
 

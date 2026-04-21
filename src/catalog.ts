@@ -14,6 +14,31 @@ async function requiresCommands(...commands: string[]): Promise<TaskAvailability
   return { available: true };
 }
 
+async function requiresMas(): Promise<TaskAvailability> {
+  return await requiresCommands("mas");
+}
+
+async function requiresDockerDaemon(): Promise<TaskAvailability> {
+  const cliAvailability = await requiresCommands("docker");
+  if (!cliAvailability.available) {
+    return cliAvailability;
+  }
+
+  try {
+    await runCommandCapture({
+      command: "docker",
+      args: ["info", "--format", "{{.ServerVersion}}"]
+    });
+
+    return { available: true };
+  } catch {
+    return {
+      available: false,
+      reason: "docker daemon not running"
+    };
+  }
+}
+
 function shellTask(options: {
   id: string;
   title: string;
@@ -23,6 +48,7 @@ function shellTask(options: {
   command: string;
   args: string[];
   requirements: string[];
+  checkAvailability?: () => Promise<TaskAvailability>;
 }): TaskDefinition {
   return {
     id: options.id,
@@ -31,7 +57,7 @@ function shellTask(options: {
     categories: options.categories,
     defaultSelected: true,
     commandLabel: options.commandLabel,
-    checkAvailability: () => requiresCommands(...options.requirements),
+    checkAvailability: options.checkAvailability ?? (() => requiresCommands(...options.requirements)),
     run: async ({ signal, onOutput }) => {
       await runCommandStreaming(
         {
@@ -54,8 +80,13 @@ const dockerRefreshTask: TaskDefinition = {
   categories: ["docker"],
   defaultSelected: true,
   commandLabel: "docker ps + docker pull <running images>",
-  checkAvailability: () => requiresCommands("docker"),
+  checkAvailability: () => requiresDockerDaemon(),
   run: async ({ signal, onOutput }) => {
+    const availability = await requiresDockerDaemon();
+    if (!availability.available) {
+      throw new Error(availability.reason ?? "docker daemon not running");
+    }
+
     const raw = await runCommandCapture({
       command: "docker",
       args: ["ps", "--format", "{{.Image}}\t{{.Names}}"]
@@ -116,7 +147,8 @@ const catalog: TaskDefinition[] = [
     commandLabel: "mas upgrade",
     command: "mas",
     args: ["upgrade"],
-    requirements: ["mas"]
+    requirements: [],
+    checkAvailability: () => requiresMas()
   }),
   shellTask({
     id: "brew-update",

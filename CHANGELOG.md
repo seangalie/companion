@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-04-21
+
+### Added
+
+- Added a running activity indicator in the live output panel so long-running commands continue to show motion and elapsed time even when they are temporarily silent.
+
+### Changed
+
+- Added an explicit `mas` availability check for App Store upgrades so the task is clearly marked unavailable when the App Store CLI is not installed.
+- Added a Docker daemon availability check so container image refresh only becomes runnable when the Docker CLI is present and the engine is actually running.
+
 ## [0.1.0] - 2026-04-21
 
 ### Added
