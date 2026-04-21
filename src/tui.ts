@@ -55,9 +55,12 @@ class CompanionTui {
   private readonly overlayBox: blessed.Widgets.BoxElement;
   private readonly overlayContent: blessed.Widgets.BoxElement;
   private readonly overlayFooter: blessed.Widgets.BoxElement;
+  private readonly promptBackdrop: blessed.Widgets.BoxElement;
   private readonly promptBox: blessed.Widgets.BoxElement;
+  private readonly promptStatusBox: blessed.Widgets.BoxElement;
   private readonly promptMessageBox: blessed.Widgets.BoxElement;
   private readonly promptInput: blessed.Widgets.TextboxElement;
+  private readonly promptOutputBox: blessed.Widgets.BoxElement;
   private readonly promptFooterBox: blessed.Widgets.BoxElement;
   private readonly rows: TaskRow[];
 
@@ -156,8 +159,24 @@ class CompanionTui {
       }
     });
 
-    this.promptBox = this.createOverlayPanel(" Interactive Prompt ");
+    this.promptBackdrop = blessed.box({
+      parent: this.screen,
+      hidden: true,
+      style: {
+        bg: "#050C14"
+      }
+    });
+
+    this.promptBox = this.createOverlayPanel(" Action Required ");
     this.promptBox.hide();
+
+    this.promptStatusBox = blessed.box({
+      parent: this.promptBox,
+      tags: true,
+      style: {
+        fg: palette.warning
+      }
+    });
 
     this.promptMessageBox = blessed.box({
       parent: this.promptBox,
@@ -180,6 +199,23 @@ class CompanionTui {
       },
       border: "line",
       censor: true
+    });
+
+    this.promptOutputBox = blessed.box({
+      parent: this.promptBox,
+      tags: true,
+      border: "line",
+      label: this.renderPanelLabel(" Recent Output "),
+      style: {
+        fg: palette.text,
+        border: {
+          fg: palette.separator
+        }
+      },
+      padding: {
+        left: 1,
+        right: 1
+      }
     });
 
     this.promptFooterBox = blessed.box({
@@ -689,17 +725,35 @@ class CompanionTui {
     }
 
     if (this.promptVisible) {
+      this.promptBackdrop.show();
+      this.promptBackdrop.top = 0;
+      this.promptBackdrop.left = 0;
+      this.promptBackdrop.width = width;
+      this.promptBackdrop.height = height;
+      this.promptBackdrop.setFront();
+
       this.promptBox.show();
-      const promptWidth = Math.max(48, Math.min(width - 6, 72));
+      const promptWidth = Math.max(58, Math.min(width - 8, 88));
       const promptInnerWidth = Math.max(1, promptWidth - 2);
+      const promptStatusLines = [
+        this.tagFg(
+          `${this.spinnerFrames[this.spinnerIndex]} Waiting on ${this.getActiveTaskTitle()} to continue`,
+          palette.warning
+        ),
+        this.tagFg("The update queue is paused until you respond to this prompt.", palette.muted)
+      ];
       const promptMessageLines = wrapText(this.promptMessage, Math.max(1, promptInnerWidth - 2));
+      const outputHeight = Math.min(6, Math.max(4, Math.floor(height / 5)));
+      const promptOutputWidth = Math.max(1, promptInnerWidth - 4);
+      const promptOutputLines = this.getPromptOutputLines(promptOutputWidth, Math.max(1, outputHeight - 2));
       const promptFooter = this.renderFooterLine([
         { command: "enter", description: "submit" },
         { command: "esc", description: "cancel" }
       ]);
-      const promptHeight = Math.max(8, promptMessageLines.length + 7);
+      const promptHeight = Math.max(15, promptStatusLines.length + promptMessageLines.length + outputHeight + 8);
       const promptLeft = Math.max(0, Math.floor((width - promptWidth) / 2));
       const promptTop = Math.max(0, Math.floor((height - promptHeight) / 2));
+      let cursorTop = 1;
 
       this.promptBox.top = promptTop;
       this.promptBox.left = promptLeft;
@@ -707,18 +761,33 @@ class CompanionTui {
       this.promptBox.height = promptHeight;
       this.promptBox.setFront();
 
-      this.promptMessageBox.top = 1;
+      this.promptStatusBox.top = cursorTop;
+      this.promptStatusBox.left = 1;
+      this.promptStatusBox.width = Math.max(1, promptInnerWidth);
+      this.promptStatusBox.height = promptStatusLines.length;
+      this.promptStatusBox.setContent(promptStatusLines.join("\n"));
+      cursorTop += promptStatusLines.length + 1;
+
+      this.promptMessageBox.top = cursorTop;
       this.promptMessageBox.left = 1;
       this.promptMessageBox.width = Math.max(1, promptInnerWidth);
       this.promptMessageBox.height = Math.max(1, promptMessageLines.length);
       this.promptMessageBox.setContent(promptMessageLines.join("\n"));
+      cursorTop += promptMessageLines.length + 1;
 
-      this.promptInput.top = promptMessageLines.length + 2;
+      this.promptInput.top = cursorTop;
       this.promptInput.left = 1;
       this.promptInput.width = Math.max(1, promptInnerWidth);
       this.promptInput.height = 3;
       this.promptInput.secret = this.promptSecret;
       this.promptInput.censor = this.promptSecret;
+      cursorTop += 4;
+
+      this.promptOutputBox.top = cursorTop;
+      this.promptOutputBox.left = 1;
+      this.promptOutputBox.width = Math.max(1, promptInnerWidth);
+      this.promptOutputBox.height = outputHeight;
+      this.promptOutputBox.setContent(promptOutputLines.join("\n"));
 
       this.promptFooterBox.top = promptHeight - 2;
       this.promptFooterBox.left = 1;
@@ -726,6 +795,7 @@ class CompanionTui {
       this.promptFooterBox.height = 1;
       this.promptFooterBox.setContent(promptFooter);
     } else {
+      this.promptBackdrop.hide();
       this.promptBox.hide();
     }
 
@@ -978,6 +1048,26 @@ class CompanionTui {
     if (this.logs.length > 200) {
       this.logs = this.logs.slice(-200);
     }
+  }
+
+  private getActiveTaskTitle(): string {
+    if (!this.currentTaskId) {
+      return "the active task";
+    }
+
+    return this.findRow(this.currentTaskId).state.definition.title;
+  }
+
+  private getPromptOutputLines(innerWidth: number, maxLines: number): string[] {
+    const lines = this.logs
+      .slice(-maxLines)
+      .map((line) => truncate(line, innerWidth));
+
+    if (lines.length > 0) {
+      return lines;
+    }
+
+    return [this.tagFg("Waiting for additional command output...", palette.muted)];
   }
 
   private async runInteractiveCommand(command: string, args: string[]): Promise<void> {
