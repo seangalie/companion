@@ -1,9 +1,10 @@
-import type { RunnerEvent, TaskDefinition, TaskResult, TaskStatus } from "./types";
+import type { RunnerEvent, TaskDefinition, TaskResult, TaskRunContext, TaskStatus } from "./types";
 
 export async function runTasks(
   tasks: TaskDefinition[],
   signal: AbortSignal,
-  onEvent: (event: RunnerEvent) => void
+  onEvent: (event: RunnerEvent) => void,
+  contextOverrides: Pick<TaskRunContext, "runCommandForeground">
 ): Promise<TaskResult[]> {
   const results: TaskResult[] = [];
 
@@ -32,7 +33,8 @@ export async function runTasks(
             task,
             line
           });
-        }
+        },
+        runCommandForeground: contextOverrides.runCommandForeground
       });
     } catch (caught) {
       error = caught instanceof Error ? caught : new Error(String(caught));

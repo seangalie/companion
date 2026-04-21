@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 
 import { trimLines } from "./utils";
 
@@ -6,6 +7,13 @@ export interface CommandSpec {
   command: string;
   args?: string[];
 }
+
+interface ForegroundSpawnOptions {
+  env?: NodeJS.ProcessEnv;
+  stdio?: "inherit";
+}
+
+type SpawnLike = (command: string, args: string[], options: ForegroundSpawnOptions) => ChildProcess;
 
 export async function commandExists(command: string): Promise<boolean> {
   const result = spawnSync("which", [command], {
@@ -90,6 +98,63 @@ export async function runCommandStreaming(
 
     child.on("error", (error) => finish(error));
 
+    child.on("close", (code, signal) => {
+      if (signal === "SIGTERM" && options.signal.aborted) {
+        finish(new Error("Command cancelled"));
+        return;
+      }
+
+      if (code === 0) {
+        finish();
+        return;
+      }
+
+      finish(new Error(`${command} exited with code ${code ?? 1}`));
+    });
+  });
+}
+
+export async function runCommandForeground(
+  spec: CommandSpec,
+  options: {
+    signal: AbortSignal;
+    spawnProcess?: SpawnLike;
+  }
+): Promise<void> {
+  const { command, args = [] } = spec;
+  const spawnProcess = options.spawnProcess ?? spawn;
+
+  await new Promise<void>((resolve, reject) => {
+    const child = spawnProcess(command, args, {
+      env: process.env,
+      stdio: "inherit"
+    });
+
+    let settled = false;
+
+    const finish = (error?: Error) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      options.signal.removeEventListener("abort", abortHandler);
+
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    };
+
+    const abortHandler = () => {
+      child.kill("SIGTERM");
+    };
+
+    options.signal.addEventListener("abort", abortHandler);
+
+    child.on("error", (error) => finish(error));
     child.on("close", (code, signal) => {
       if (signal === "SIGTERM" && options.signal.aborted) {
         finish(new Error("Command cancelled"));

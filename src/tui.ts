@@ -1,5 +1,6 @@
 import blessed from "blessed";
 
+import { runCommandForeground } from "./command";
 import { collectSnapshot, getFastfetchOutput } from "./system";
 import { runTasks } from "./runner";
 import type { RunnerEvent, SystemSnapshot, TaskDefinition, TaskResult, TaskState, TaskStatus } from "./types";
@@ -437,10 +438,17 @@ class CompanionTui {
     this.abortController = new AbortController();
     this.render();
 
-    const results = await runTasks(tasks, this.abortController.signal, (event) => {
-      this.applyRunnerEvent(event);
-      this.render();
-    });
+    const results = await runTasks(
+      tasks,
+      this.abortController.signal,
+      (event) => {
+        this.applyRunnerEvent(event);
+        this.render();
+      },
+      {
+        runCommandForeground: (command, args = []) => this.runForegroundCommand(command, args)
+      }
+    );
 
     this.abortController = undefined;
     this.lastResults = results;
@@ -844,6 +852,24 @@ class CompanionTui {
     if (this.logs.length > 200) {
       this.logs = this.logs.slice(-200);
     }
+  }
+
+  private async runForegroundCommand(command: string, args: string[]): Promise<void> {
+    if (!this.abortController) {
+      throw new Error("No active run is available.");
+    }
+
+    await runCommandForeground(
+      {
+        command,
+        args
+      },
+      {
+        signal: this.abortController.signal,
+        spawnProcess: (foregroundCommand, foregroundArgs, options) =>
+          this.screen.spawn(foregroundCommand, foregroundArgs, options)
+      }
+    );
   }
 
   private findRow(taskId: string): TaskRow {

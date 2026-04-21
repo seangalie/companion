@@ -2,6 +2,7 @@ import { collectSnapshot } from "./system";
 import type { TaskDefinition, TaskResult, TaskState } from "./types";
 import { formatDuration } from "./utils";
 import { runTasks } from "./runner";
+import { runCommandForeground } from "./command";
 
 export function printTaskList(states: TaskState[]): void {
   for (const state of states) {
@@ -33,24 +34,40 @@ export async function runPlainMode(tasks: TaskDefinition[]): Promise<number> {
 
   let results: TaskResult[] = [];
 
-  results = await runTasks(tasks, controller.signal, (event) => {
-    switch (event.type) {
-      case "task-start":
-        console.log(`[${event.index}/${event.total}] ${event.task.title}`);
-        console.log(`$ ${event.task.commandLabel}`);
-        break;
-      case "task-output":
-        console.log(event.line);
-        break;
-      case "task-finish":
-        console.log(`-> ${event.status} (${formatDuration(event.durationMs)})`);
-        console.log("");
-        break;
-      case "run-finish":
-        results = event.results;
-        break;
+  results = await runTasks(
+    tasks,
+    controller.signal,
+    (event) => {
+      switch (event.type) {
+        case "task-start":
+          console.log(`[${event.index}/${event.total}] ${event.task.title}`);
+          console.log(`$ ${event.task.commandLabel}`);
+          break;
+        case "task-output":
+          console.log(event.line);
+          break;
+        case "task-finish":
+          console.log(`-> ${event.status} (${formatDuration(event.durationMs)})`);
+          console.log("");
+          break;
+        case "run-finish":
+          results = event.results;
+          break;
+      }
+    },
+    {
+      runCommandForeground: (command, args = []) =>
+        runCommandForeground(
+          {
+            command,
+            args
+          },
+          {
+            signal: controller.signal
+          }
+        )
     }
-  });
+  );
 
   process.removeListener("SIGINT", handleSigInt);
 

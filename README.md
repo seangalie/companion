@@ -69,6 +69,7 @@ companion -l --list-tasks
 - Some update commands may require elevated privileges depending on the machine state and the packages being updated.
 - `companion --auto` is useful when you want the same task catalog without the TUI.
 - Unavailable tools such as `brew`, `npm`, or `mas` are detected and clearly marked in the interface.
+- Commands that may prompt for credentials, such as App Store or macOS system updates, temporarily take over the foreground terminal so password prompts are visible and usable.
 - `fastfetch` is optional. If it is installed, press `f` in the TUI to open a full-screen hardware and system details view.
 - The Docker task refreshes images for currently running containers and reports that those containers should be recreated if the pulled image changed.
 - Docker refresh is only available when the Docker CLI is installed and the Docker daemon is running.
