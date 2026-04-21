@@ -29,17 +29,23 @@ details view powered by `fastfetch`.
 ## Install
 
 ```zsh
-git clone https://github.com/seangalie/companion.git
-cd companion
-npm install
-npm run build
-npm link
+npm i -g @seangalie/companion
 ```
 
 If you wish to install directly from GitHub:
 
 ```zsh
 npm install -g github:seangalie/companion
+```
+
+If you wish to clone the repository and build it locally:
+
+```zsh
+git clone https://github.com/seangalie/companion.git
+cd companion
+npm install
+npm run build
+npm link
 ```
 
 ## Usage
