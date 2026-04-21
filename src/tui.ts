@@ -118,7 +118,7 @@ class CompanionTui {
       }
     });
 
-    this.overlayBox = this.createPanel(" System Details ");
+    this.overlayBox = this.createOverlayPanel(" System Details ");
     this.overlayBox.hide();
 
     this.overlayContent = blessed.box({
@@ -184,6 +184,21 @@ class CompanionTui {
       padding: {
         left: 1,
         right: 1
+      }
+    });
+  }
+
+  private createOverlayPanel(label: string): blessed.Widgets.BoxElement {
+    return blessed.box({
+      parent: this.screen,
+      tags: true,
+      border: "line",
+      label: this.renderPanelLabel(label),
+      style: {
+        fg: palette.text,
+        border: {
+          fg: palette.border
+        }
       }
     });
   }
@@ -280,8 +295,6 @@ class CompanionTui {
 
       const row = this.rows[this.cursor];
       if (!row.state.availability.available) {
-        this.statusMessage = "That task is unavailable on this machine.";
-        this.render();
         return;
       }
 
@@ -559,17 +572,20 @@ class CompanionTui {
         { command: "c", description: "close" },
         { command: "q", description: "quit" }
       ])];
+      const overlayInnerWidth = Math.max(1, width - 2);
+      const overlayInnerHeight = Math.max(1, height - 2);
+      const overlayFooterHeight = overlayFooterLines.length;
 
-      this.overlayFooter.left = 1;
-      this.overlayFooter.width = Math.max(1, width - 2);
-      this.overlayFooter.height = overlayFooterLines.length;
-      this.overlayFooter.top = height - overlayFooterLines.length - 1;
+      this.overlayFooter.left = 0;
+      this.overlayFooter.width = overlayInnerWidth;
+      this.overlayFooter.height = overlayFooterHeight;
+      this.overlayFooter.top = Math.max(0, overlayInnerHeight - overlayFooterHeight);
       this.overlayFooter.setContent(overlayFooterLines.join("\n"));
 
-      this.overlayContent.left = 1;
-      this.overlayContent.top = 1;
-      this.overlayContent.width = Math.max(1, width - 2);
-      this.overlayContent.height = Math.max(1, height - overlayFooterLines.length - 3);
+      this.overlayContent.left = 0;
+      this.overlayContent.top = 0;
+      this.overlayContent.width = overlayInnerWidth;
+      this.overlayContent.height = Math.max(1, overlayInnerHeight - overlayFooterHeight);
       this.overlayContent.setContent(
         this.fastfetchLoading
           ? `${this.spinnerFrames[this.spinnerIndex]} loading fastfetch output...`

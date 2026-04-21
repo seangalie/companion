@@ -1,6 +1,6 @@
 {
   "name": "@seangalie/companion",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A macOS update console that packages routine maintenance commands into a shareable Node-powered TUI.",
   "keywords": [
     "cli",
