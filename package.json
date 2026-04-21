@@ -1,0 +1,54 @@
+{
+  "name": "companion",
+  "version": "0.1.0",
+  "description": "A macOS update console that packages routine maintenance commands into a shareable Node-powered TUI.",
+  "license": "Apache-2.0",
+  "author": "Sean Galie",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seangalie/companion.git"
+  },
+  "homepage": "https://github.com/seangalie/companion#readme",
+  "bugs": {
+    "url": "https://github.com/seangalie/companion/issues"
+  },
+  "keywords": [
+    "cli",
+    "tui",
+    "macos",
+    "homebrew",
+    "npm",
+    "automation",
+    "updates"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "VERSION"
+  ],
+  "bin": {
+    "companion": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "npm run check",
+    "prepare": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "blessed": "^0.1.81"
+  },
+  "devDependencies": {
+    "@types/blessed": "^0.1.25",
+    "@types/node": "^24.7.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
