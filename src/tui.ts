@@ -1,6 +1,6 @@
 import blessed from "blessed";
 
-import { runCommandForeground } from "./command";
+import { runCommandInteractive } from "./command";
 import { collectSnapshot, getFastfetchOutput } from "./system";
 import { runTasks } from "./runner";
 import type { RunnerEvent, SystemSnapshot, TaskDefinition, TaskResult, TaskState, TaskStatus } from "./types";
@@ -55,6 +55,10 @@ class CompanionTui {
   private readonly overlayBox: blessed.Widgets.BoxElement;
   private readonly overlayContent: blessed.Widgets.BoxElement;
   private readonly overlayFooter: blessed.Widgets.BoxElement;
+  private readonly promptBox: blessed.Widgets.BoxElement;
+  private readonly promptMessageBox: blessed.Widgets.BoxElement;
+  private readonly promptInput: blessed.Widgets.TextboxElement;
+  private readonly promptFooterBox: blessed.Widgets.BoxElement;
   private readonly rows: TaskRow[];
 
   private mode: ScreenMode = "select";
@@ -71,6 +75,9 @@ class CompanionTui {
   private fastfetchVisible = false;
   private fastfetchLoading = false;
   private fastfetchError?: string;
+  private promptVisible = false;
+  private promptMessage = "";
+  private promptSecret = false;
   private spinnerIndex = 0;
   private readonly spinnerFrames = ["-", "\\", "|", "/"];
   private resolveExit?: () => void;
@@ -149,6 +156,40 @@ class CompanionTui {
       }
     });
 
+    this.promptBox = this.createOverlayPanel(" Interactive Prompt ");
+    this.promptBox.hide();
+
+    this.promptMessageBox = blessed.box({
+      parent: this.promptBox,
+      tags: true,
+      style: {
+        fg: palette.text
+      }
+    });
+
+    this.promptInput = blessed.textbox({
+      parent: this.promptBox,
+      keys: true,
+      mouse: true,
+      style: {
+        fg: palette.text,
+        bg: palette.shell,
+        border: {
+          fg: palette.border
+        }
+      },
+      border: "line",
+      censor: true
+    });
+
+    this.promptFooterBox = blessed.box({
+      parent: this.promptBox,
+      tags: true,
+      style: {
+        fg: palette.muted
+      }
+    });
+
     this.registerKeys();
     this.screen.on("resize", () => this.render());
 
@@ -208,6 +249,10 @@ class CompanionTui {
     this.screen.key(["C-c"], () => this.exit());
 
     this.screen.key(["q"], () => {
+      if (this.promptVisible) {
+        return;
+      }
+
       if (this.fastfetchVisible) {
         this.exit();
         return;
@@ -224,6 +269,10 @@ class CompanionTui {
     });
 
     this.screen.key(["up", "k"], () => {
+      if (this.promptVisible) {
+        return;
+      }
+
       if (this.fastfetchVisible) {
         this.overlayContent.scroll(-1);
         this.screen.render();
@@ -239,6 +288,10 @@ class CompanionTui {
     });
 
     this.screen.key(["down", "j"], () => {
+      if (this.promptVisible) {
+        return;
+      }
+
       if (this.fastfetchVisible) {
         this.overlayContent.scroll(1);
         this.screen.render();
@@ -254,6 +307,10 @@ class CompanionTui {
     });
 
     this.screen.key(["pageup"], () => {
+      if (this.promptVisible) {
+        return;
+      }
+
       if (!this.fastfetchVisible) {
         return;
       }
@@ -263,6 +320,10 @@ class CompanionTui {
     });
 
     this.screen.key(["pagedown"], () => {
+      if (this.promptVisible) {
+        return;
+      }
+
       if (!this.fastfetchVisible) {
         return;
       }
@@ -272,6 +333,10 @@ class CompanionTui {
     });
 
     this.screen.key(["g"], () => {
+      if (this.promptVisible) {
+        return;
+      }
+
       if (!this.fastfetchVisible) {
         return;
       }
@@ -281,6 +346,10 @@ class CompanionTui {
     });
 
     this.screen.key(["G"], () => {
+      if (this.promptVisible) {
+        return;
+      }
+
       if (!this.fastfetchVisible) {
         return;
       }
@@ -290,7 +359,7 @@ class CompanionTui {
     });
 
     this.screen.key(["space"], () => {
-      if (this.fastfetchVisible || this.mode !== "select") {
+      if (this.promptVisible || this.fastfetchVisible || this.mode !== "select") {
         return;
       }
 
@@ -304,7 +373,7 @@ class CompanionTui {
     });
 
     this.screen.key(["a"], () => {
-      if (this.fastfetchVisible || this.mode !== "select") {
+      if (this.promptVisible || this.fastfetchVisible || this.mode !== "select") {
         return;
       }
 
@@ -322,6 +391,10 @@ class CompanionTui {
     });
 
     this.screen.key(["enter"], async () => {
+      if (this.promptVisible) {
+        return;
+      }
+
       if (this.fastfetchVisible) {
         this.fastfetchVisible = false;
         this.render();
@@ -343,6 +416,10 @@ class CompanionTui {
     });
 
     this.screen.key(["r"], async () => {
+      if (this.promptVisible) {
+        return;
+      }
+
       if (this.fastfetchVisible) {
         await this.refreshFastfetch();
         return;
@@ -359,6 +436,10 @@ class CompanionTui {
     });
 
     this.screen.key(["f"], async () => {
+      if (this.promptVisible) {
+        return;
+      }
+
       this.fastfetchVisible = !this.fastfetchVisible;
       if (this.fastfetchVisible) {
         await this.refreshFastfetch();
@@ -368,6 +449,10 @@ class CompanionTui {
     });
 
     this.screen.key(["c"], () => {
+      if (this.promptVisible) {
+        return;
+      }
+
       if (!this.fastfetchVisible) {
         return;
       }
@@ -446,7 +531,7 @@ class CompanionTui {
         this.render();
       },
       {
-        runCommandForeground: (command, args = []) => this.runForegroundCommand(command, args)
+        runCommandInteractive: (command, args = []) => this.runInteractiveCommand(command, args)
       }
     );
 
@@ -601,6 +686,47 @@ class CompanionTui {
       );
     } else {
       this.overlayBox.hide();
+    }
+
+    if (this.promptVisible) {
+      this.promptBox.show();
+      const promptWidth = Math.max(48, Math.min(width - 6, 72));
+      const promptInnerWidth = Math.max(1, promptWidth - 2);
+      const promptMessageLines = wrapText(this.promptMessage, Math.max(1, promptInnerWidth - 2));
+      const promptFooter = this.renderFooterLine([
+        { command: "enter", description: "submit" },
+        { command: "esc", description: "cancel" }
+      ]);
+      const promptHeight = Math.max(8, promptMessageLines.length + 7);
+      const promptLeft = Math.max(0, Math.floor((width - promptWidth) / 2));
+      const promptTop = Math.max(0, Math.floor((height - promptHeight) / 2));
+
+      this.promptBox.top = promptTop;
+      this.promptBox.left = promptLeft;
+      this.promptBox.width = promptWidth;
+      this.promptBox.height = promptHeight;
+      this.promptBox.setFront();
+
+      this.promptMessageBox.top = 1;
+      this.promptMessageBox.left = 1;
+      this.promptMessageBox.width = Math.max(1, promptInnerWidth);
+      this.promptMessageBox.height = Math.max(1, promptMessageLines.length);
+      this.promptMessageBox.setContent(promptMessageLines.join("\n"));
+
+      this.promptInput.top = promptMessageLines.length + 2;
+      this.promptInput.left = 1;
+      this.promptInput.width = Math.max(1, promptInnerWidth);
+      this.promptInput.height = 3;
+      this.promptInput.secret = this.promptSecret;
+      this.promptInput.censor = this.promptSecret;
+
+      this.promptFooterBox.top = promptHeight - 2;
+      this.promptFooterBox.left = 1;
+      this.promptFooterBox.width = Math.max(1, promptInnerWidth);
+      this.promptFooterBox.height = 1;
+      this.promptFooterBox.setContent(promptFooter);
+    } else {
+      this.promptBox.hide();
     }
 
     this.screen.render();
@@ -854,22 +980,51 @@ class CompanionTui {
     }
   }
 
-  private async runForegroundCommand(command: string, args: string[]): Promise<void> {
+  private async runInteractiveCommand(command: string, args: string[]): Promise<void> {
     if (!this.abortController) {
       throw new Error("No active run is available.");
     }
 
-    await runCommandForeground(
+    await runCommandInteractive(
       {
         command,
         args
       },
       {
         signal: this.abortController.signal,
-        spawnProcess: (foregroundCommand, foregroundArgs, options) =>
-          this.screen.spawn(foregroundCommand, foregroundArgs, options)
+        onLine: (line) => {
+          this.appendLog(line);
+          this.render();
+        },
+        requestInput: ({ text, secret }) => this.requestPromptInput(text, secret)
       }
     );
+  }
+
+  private async requestPromptInput(text: string, secret: boolean): Promise<string> {
+    this.promptVisible = true;
+    this.promptMessage = text;
+    this.promptSecret = secret;
+    this.promptInput.clearValue();
+    this.render();
+
+    return await new Promise<string>((resolve, reject) => {
+      this.promptInput.focus();
+      this.promptInput.readInput((error, value) => {
+        this.promptVisible = false;
+        this.promptMessage = "";
+        this.promptSecret = false;
+        this.promptInput.clearValue();
+        this.render();
+
+        if (error) {
+          reject(new Error("Interactive input cancelled"));
+          return;
+        }
+
+        resolve(value ?? "");
+      });
+    });
   }
 
   private findRow(taskId: string): TaskRow {

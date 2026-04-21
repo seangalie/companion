@@ -4,7 +4,7 @@ export async function runTasks(
   tasks: TaskDefinition[],
   signal: AbortSignal,
   onEvent: (event: RunnerEvent) => void,
-  contextOverrides: Pick<TaskRunContext, "runCommandForeground">
+  contextOverrides: Pick<TaskRunContext, "runCommandInteractive">
 ): Promise<TaskResult[]> {
   const results: TaskResult[] = [];
 
@@ -34,7 +34,7 @@ export async function runTasks(
             line
           });
         },
-        runCommandForeground: contextOverrides.runCommandForeground
+        runCommandInteractive: contextOverrides.runCommandInteractive
       });
     } catch (caught) {
       error = caught instanceof Error ? caught : new Error(String(caught));

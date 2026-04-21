@@ -56,7 +56,7 @@ export async function runPlainMode(tasks: TaskDefinition[]): Promise<number> {
       }
     },
     {
-      runCommandForeground: (command, args = []) =>
+      runCommandInteractive: (command, args = []) =>
         runCommandForeground(
           {
             command,

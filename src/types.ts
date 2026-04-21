@@ -33,7 +33,7 @@ export interface TaskState {
 export interface TaskRunContext {
   signal: AbortSignal;
   onOutput: (line: string) => void;
-  runCommandForeground: (command: string, args?: string[]) => Promise<void>;
+  runCommandInteractive: (command: string, args?: string[]) => Promise<void>;
 }
 
 export interface TaskResult {

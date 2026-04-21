@@ -49,7 +49,7 @@ function shellTask(options: {
   args: string[];
   requirements: string[];
   checkAvailability?: () => Promise<TaskAvailability>;
-  executionMode?: "stream" | "foreground";
+  executionMode?: "stream" | "interactive";
 }): TaskDefinition {
   return {
     id: options.id,
@@ -59,14 +59,13 @@ function shellTask(options: {
     defaultSelected: true,
     commandLabel: options.commandLabel,
     checkAvailability: options.checkAvailability ?? (() => requiresCommands(...options.requirements)),
-    run: async ({ signal, onOutput, runCommandForeground }) => {
-      if (options.executionMode === "foreground") {
-        onOutput(`Companion is handing control to ${options.commandLabel}. Complete any prompts in the terminal to continue.`);
-        onOutput("Use Ctrl-C in the foreground command to cancel it.");
+    run: async ({ signal, onOutput, runCommandInteractive }) => {
+      if (options.executionMode === "interactive") {
+        onOutput(`Companion will surface any prompts required by ${options.commandLabel}.`);
 
-        await runCommandForeground(options.command, options.args);
+        await runCommandInteractive(options.command, options.args);
 
-        onOutput(`${options.commandLabel} returned control to Companion.`);
+        onOutput(`${options.commandLabel} completed interactive execution.`);
         return;
       }
 
@@ -149,7 +148,7 @@ const catalog: TaskDefinition[] = [
     command: "softwareupdate",
     args: ["-i", "-a"],
     requirements: ["softwareupdate"],
-    executionMode: "foreground"
+    executionMode: "interactive"
   }),
   shellTask({
     id: "mas-upgrade",
@@ -161,7 +160,7 @@ const catalog: TaskDefinition[] = [
     args: ["upgrade"],
     requirements: [],
     checkAvailability: () => requiresMas(),
-    executionMode: "foreground"
+    executionMode: "interactive"
   }),
   shellTask({
     id: "brew-update",
