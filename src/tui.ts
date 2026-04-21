@@ -79,6 +79,7 @@ class CompanionTui {
   private fastfetchLoading = false;
   private fastfetchError?: string;
   private promptVisible = false;
+  private promptInputActive = false;
   private promptMessage = "";
   private promptSecret = false;
   private spinnerIndex = 0;
@@ -285,7 +286,14 @@ class CompanionTui {
     this.screen.key(["C-c"], () => this.exit());
 
     this.screen.key(["q"], () => {
-      if (this.promptVisible) {
+      if (this.promptVisible && this.promptInputActive) {
+        return;
+      }
+
+      if (this.promptVisible && this.mode === "running") {
+        this.abortController?.abort();
+        this.statusMessage = "Cancellation requested. Waiting for the active task to stop...";
+        this.render();
         return;
       }
 
@@ -735,22 +743,35 @@ class CompanionTui {
       this.promptBox.show();
       const promptWidth = Math.max(58, Math.min(width - 8, 88));
       const promptInnerWidth = Math.max(1, promptWidth - 2);
+      const promptMessageText = this.promptInputActive
+        ? this.promptMessage
+        : `Companion is monitoring ${this.getActiveTaskTitle()} for a credential request. Recent output from the running command is shown below.`;
       const promptStatusLines = [
         this.tagFg(
           `${this.spinnerFrames[this.spinnerIndex]} Waiting on ${this.getActiveTaskTitle()} to continue`,
           palette.warning
         ),
-        this.tagFg("The update queue is paused until you respond to this prompt.", palette.muted)
+        this.tagFg(
+          this.promptInputActive
+            ? "The update queue is paused until you respond to this prompt."
+            : "The update queue is paused while Companion waits for the command to ask for input.",
+          palette.muted
+        )
       ];
-      const promptMessageLines = wrapText(this.promptMessage, Math.max(1, promptInnerWidth - 2));
-      const outputHeight = Math.min(6, Math.max(4, Math.floor(height / 5)));
+      const promptMessageLines = wrapText(promptMessageText, Math.max(1, promptInnerWidth - 2));
+      const outputHeight = this.promptInputActive
+        ? Math.min(6, Math.max(4, Math.floor(height / 5)))
+        : Math.min(8, Math.max(5, Math.floor(height / 4)));
       const promptOutputWidth = Math.max(1, promptInnerWidth - 4);
       const promptOutputLines = this.getPromptOutputLines(promptOutputWidth, Math.max(1, outputHeight - 2));
-      const promptFooter = this.renderFooterLine([
-        { command: "enter", description: "submit" },
-        { command: "esc", description: "cancel" }
-      ]);
-      const promptHeight = Math.max(15, promptStatusLines.length + promptMessageLines.length + outputHeight + 8);
+      const promptFooter = this.promptInputActive
+        ? this.renderFooterLine([
+            { command: "enter", description: "submit" },
+            { command: "esc", description: "cancel" }
+          ])
+        : this.renderFooterLine([{ command: "q", description: "cancel current run" }]);
+      const inputHeight = this.promptInputActive ? 4 : 0;
+      const promptHeight = Math.max(14, promptStatusLines.length + promptMessageLines.length + outputHeight + inputHeight + 5);
       const promptLeft = Math.max(0, Math.floor((width - promptWidth) / 2));
       const promptTop = Math.max(0, Math.floor((height - promptHeight) / 2));
       let cursorTop = 1;
@@ -775,13 +796,18 @@ class CompanionTui {
       this.promptMessageBox.setContent(promptMessageLines.join("\n"));
       cursorTop += promptMessageLines.length + 1;
 
-      this.promptInput.top = cursorTop;
-      this.promptInput.left = 1;
-      this.promptInput.width = Math.max(1, promptInnerWidth);
-      this.promptInput.height = 3;
-      this.promptInput.secret = this.promptSecret;
-      this.promptInput.censor = this.promptSecret;
-      cursorTop += 4;
+      if (this.promptInputActive) {
+        this.promptInput.show();
+        this.promptInput.top = cursorTop;
+        this.promptInput.left = 1;
+        this.promptInput.width = Math.max(1, promptInnerWidth);
+        this.promptInput.height = 3;
+        this.promptInput.secret = this.promptSecret;
+        this.promptInput.censor = this.promptSecret;
+        cursorTop += 4;
+      } else {
+        this.promptInput.hide();
+      }
 
       this.promptOutputBox.top = cursorTop;
       this.promptOutputBox.left = 1;
@@ -797,6 +823,7 @@ class CompanionTui {
     } else {
       this.promptBackdrop.hide();
       this.promptBox.hide();
+      this.promptInput.hide();
     }
 
     this.screen.render();
@@ -1075,34 +1102,55 @@ class CompanionTui {
       throw new Error("No active run is available.");
     }
 
-    await runCommandInteractive(
-      {
-        command,
-        args
-      },
-      {
-        signal: this.abortController.signal,
-        onLine: (line) => {
-          this.appendLog(line);
-          this.render();
+    this.promptVisible = true;
+    this.promptInputActive = false;
+    this.promptMessage = "";
+    this.promptSecret = false;
+    this.promptInput.clearValue();
+    this.render();
+    await this.waitForRenderFrame();
+
+    try {
+      await runCommandInteractive(
+        {
+          command,
+          args
         },
-        requestInput: ({ text, secret }) => this.requestPromptInput(text, secret)
-      }
-    );
+        {
+          signal: this.abortController.signal,
+          onLine: (line) => {
+            this.appendLog(line);
+            this.render();
+          },
+          requestInput: ({ text, secret }) => this.requestPromptInput(text, secret)
+        }
+      );
+    } finally {
+      this.promptVisible = false;
+      this.promptInputActive = false;
+      this.promptMessage = "";
+      this.promptSecret = false;
+      this.promptInput.clearValue();
+      this.render();
+    }
   }
 
   private async requestPromptInput(text: string, secret: boolean): Promise<string> {
     this.promptVisible = true;
+    this.promptInputActive = true;
     this.promptMessage = text;
     this.promptSecret = secret;
     this.promptInput.clearValue();
     this.render();
+    await this.waitForRenderFrame();
 
     return await new Promise<string>((resolve, reject) => {
       this.promptInput.focus();
       this.promptInput.readInput((error, value) => {
-        this.promptVisible = false;
-        this.promptMessage = "";
+        this.promptInputActive = false;
+        this.promptMessage = error
+          ? "Interactive input was cancelled."
+          : "Input received. Waiting for the command to continue...";
         this.promptSecret = false;
         this.promptInput.clearValue();
         this.render();
@@ -1135,6 +1183,10 @@ class CompanionTui {
     this.abortController?.abort();
     this.screen.destroy();
     this.resolveExit?.();
+  }
+
+  private async waitForRenderFrame(): Promise<void> {
+    await new Promise<void>((resolve) => setImmediate(resolve));
   }
 }
 
