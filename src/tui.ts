@@ -59,6 +59,7 @@ class CompanionTui {
   private readonly promptBox: blessed.Widgets.BoxElement;
   private readonly promptStatusBox: blessed.Widgets.BoxElement;
   private readonly promptMessageBox: blessed.Widgets.BoxElement;
+  private readonly promptInputFrame: blessed.Widgets.BoxElement;
   private readonly promptInput: blessed.Widgets.TextboxElement;
   private readonly promptOutputBox: blessed.Widgets.BoxElement;
   private readonly promptFooterBox: blessed.Widgets.BoxElement;
@@ -187,8 +188,25 @@ class CompanionTui {
       }
     });
 
-    this.promptInput = blessed.textbox({
+    this.promptInputFrame = blessed.box({
       parent: this.promptBox,
+      tags: true,
+      border: "line",
+      label: this.renderPanelLabel(" Input "),
+      style: {
+        fg: palette.text,
+        border: {
+          fg: palette.border
+        }
+      },
+      padding: {
+        left: 1,
+        right: 1
+      }
+    });
+
+    this.promptInput = blessed.textbox({
+      parent: this.promptInputFrame,
       keys: true,
       mouse: true,
       style: {
@@ -198,7 +216,6 @@ class CompanionTui {
           fg: palette.border
         }
       },
-      border: "line",
       censor: true
     });
 
@@ -759,9 +776,7 @@ class CompanionTui {
         )
       ];
       const promptMessageLines = wrapText(promptMessageText, Math.max(1, promptInnerWidth - 2));
-      const outputHeight = this.promptInputActive
-        ? Math.min(6, Math.max(4, Math.floor(height / 5)))
-        : Math.min(8, Math.max(5, Math.floor(height / 4)));
+      const outputHeight = Math.min(7, Math.max(5, Math.floor(height / 4)));
       const promptOutputWidth = Math.max(1, promptInnerWidth - 4);
       const promptOutputLines = this.getPromptOutputLines(promptOutputWidth, Math.max(1, outputHeight - 2));
       const promptFooter = this.promptInputActive
@@ -770,8 +785,8 @@ class CompanionTui {
             { command: "esc", description: "cancel" }
           ])
         : this.renderFooterLine([{ command: "q", description: "cancel current run" }]);
-      const inputHeight = this.promptInputActive ? 4 : 0;
-      const promptHeight = Math.max(14, promptStatusLines.length + promptMessageLines.length + outputHeight + inputHeight + 5);
+      const inputHeight = 4;
+      const promptHeight = Math.max(18, promptStatusLines.length + promptMessageLines.length + outputHeight + inputHeight + 5);
       const promptLeft = Math.max(0, Math.floor((width - promptWidth) / 2));
       const promptTop = Math.max(0, Math.floor((height - promptHeight) / 2));
       let cursorTop = 1;
@@ -796,17 +811,27 @@ class CompanionTui {
       this.promptMessageBox.setContent(promptMessageLines.join("\n"));
       cursorTop += promptMessageLines.length + 1;
 
+      this.promptInputFrame.top = cursorTop;
+      this.promptInputFrame.left = 1;
+      this.promptInputFrame.width = Math.max(1, promptInnerWidth);
+      this.promptInputFrame.height = 3;
+      this.promptInput.top = 0;
+      this.promptInput.left = 0;
+      this.promptInput.width = Math.max(1, promptInnerWidth - 4);
+      this.promptInput.height = 1;
+      this.promptInput.secret = this.promptSecret;
+      this.promptInput.censor = this.promptSecret;
       if (this.promptInputActive) {
+        this.promptInputFrame.setLabel(this.renderPanelLabel(" Input "));
+        this.promptInputFrame.show();
         this.promptInput.show();
-        this.promptInput.top = cursorTop;
-        this.promptInput.left = 1;
-        this.promptInput.width = Math.max(1, promptInnerWidth);
-        this.promptInput.height = 3;
-        this.promptInput.secret = this.promptSecret;
-        this.promptInput.censor = this.promptSecret;
+        this.promptInput.setValue(this.promptInput.getValue());
         cursorTop += 4;
       } else {
+        this.promptInputFrame.setLabel(this.renderPanelLabel(" Waiting For Prompt "));
+        this.promptInputFrame.show();
         this.promptInput.hide();
+        cursorTop += 4;
       }
 
       this.promptOutputBox.top = cursorTop;
@@ -823,6 +848,7 @@ class CompanionTui {
     } else {
       this.promptBackdrop.hide();
       this.promptBox.hide();
+      this.promptInputFrame.hide();
       this.promptInput.hide();
     }
 

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stopped the task details panel from showing the unavailable-task warning on every queue item after you attempted to toggle one unavailable task.
 - Fixed the full-screen system details overlay so its footer no longer collides with the bottom border and the right border renders correctly.
 - Kept App Store and macOS update credential prompts visible with a PTY-backed full-screen foreground overlay inside the TUI, including recent command output, while plain CLI mode still falls back to the foreground terminal.
+- Opened the action-required overlay before interactive commands begin waiting for credentials, improved prompt detection against the last live PTY line, and stabilized the nested input frame layout when the password field appears.
 
 ## [0.1.1] - 2026-04-21
 

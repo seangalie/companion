@@ -336,7 +336,6 @@ export async function runCommandInteractive(
       }
 
       promptInFlight = true;
-      options.onLine(prompt.text);
 
       void options.requestInput(prompt)
         .then((value) => {
@@ -393,22 +392,27 @@ export async function runCommandInteractive(
 }
 
 function extractPrompt(buffer: string): { text: string; secret: boolean } | undefined {
-  const cleaned = normalizeTerminalOutput(buffer).trim();
-  if (!cleaned || cleaned.length > 160) {
+  const candidate = normalizeTerminalOutput(buffer)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .at(-1);
+
+  if (!candidate || candidate.length > 320) {
     return undefined;
   }
 
   const promptLike =
-    /(?:password|passphrase|passcode|pin|verification code|one-time code|otp|token|apple id|username|email)/i.test(cleaned) ||
-    /[:?]\s*$/.test(cleaned);
+    /(?:password|passphrase|passcode|pin|verification code|one-time code|otp|token|apple id|username|email)/i.test(candidate) ||
+    /[:?]\s*$/.test(candidate);
 
   if (!promptLike) {
     return undefined;
   }
 
   return {
-    text: cleaned,
-    secret: /(?:password|passphrase|passcode|pin|verification code|one-time code|otp|token)/i.test(cleaned)
+    text: candidate,
+    secret: /(?:password|passphrase|passcode|pin|verification code|one-time code|otp|token)/i.test(candidate)
   };
 }
 
