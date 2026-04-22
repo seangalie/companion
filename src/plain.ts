@@ -2,7 +2,6 @@ import { collectSnapshot } from "./system";
 import type { TaskDefinition, TaskResult, TaskState } from "./types";
 import { formatDuration } from "./utils";
 import { runTasks } from "./runner";
-import { runCommandForeground } from "./command";
 
 export function printTaskList(states: TaskState[]): void {
   for (const state of states) {
@@ -54,18 +53,6 @@ export async function runPlainMode(tasks: TaskDefinition[]): Promise<number> {
           results = event.results;
           break;
       }
-    },
-    {
-      runCommandInteractive: (command, args = []) =>
-        runCommandForeground(
-          {
-            command,
-            args
-          },
-          {
-            signal: controller.signal
-          }
-        )
     }
   );
 

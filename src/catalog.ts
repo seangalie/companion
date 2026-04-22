@@ -14,10 +14,6 @@ async function requiresCommands(...commands: string[]): Promise<TaskAvailability
   return { available: true };
 }
 
-async function requiresMas(): Promise<TaskAvailability> {
-  return await requiresCommands("mas");
-}
-
 async function requiresDockerDaemon(): Promise<TaskAvailability> {
   const cliAvailability = await requiresCommands("docker");
   if (!cliAvailability.available) {
@@ -49,7 +45,6 @@ function shellTask(options: {
   args: string[];
   requirements: string[];
   checkAvailability?: () => Promise<TaskAvailability>;
-  executionMode?: "stream" | "interactive";
 }): TaskDefinition {
   return {
     id: options.id,
@@ -59,16 +54,7 @@ function shellTask(options: {
     defaultSelected: true,
     commandLabel: options.commandLabel,
     checkAvailability: options.checkAvailability ?? (() => requiresCommands(...options.requirements)),
-    run: async ({ signal, onOutput, runCommandInteractive }) => {
-      if (options.executionMode === "interactive") {
-        onOutput(`Companion will surface any prompts required by ${options.commandLabel}.`);
-
-        await runCommandInteractive(options.command, options.args);
-
-        onOutput(`${options.commandLabel} completed interactive execution.`);
-        return;
-      }
-
+    run: async ({ signal, onOutput }) => {
       await runCommandStreaming(
         {
           command: options.command,
@@ -147,20 +133,7 @@ const catalog: TaskDefinition[] = [
     commandLabel: "softwareupdate -i -a",
     command: "softwareupdate",
     args: ["-i", "-a"],
-    requirements: ["softwareupdate"],
-    executionMode: "interactive"
-  }),
-  shellTask({
-    id: "mas-upgrade",
-    title: "App Store upgrades",
-    summary: "Upgrades installed Mac App Store applications via mas.",
-    categories: ["update"],
-    commandLabel: "mas upgrade",
-    command: "mas",
-    args: ["upgrade"],
-    requirements: [],
-    checkAvailability: () => requiresMas(),
-    executionMode: "interactive"
+    requirements: ["softwareupdate"]
   }),
   shellTask({
     id: "brew-update",

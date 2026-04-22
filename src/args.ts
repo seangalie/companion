@@ -65,7 +65,7 @@ export function helpText(): string {
     "  companion -h, --help           Display CLI usage help",
     "  companion -v, --version        Display console version",
     "  companion -a, --auto           Run entire task catalog",
-    "  companion -u, --update         Run software update and App Store tasks",
+    "  companion -u, --update         Run macOS software update tasks",
     "  companion -b, --brew           Run brew update, upgrade, and cleanup tasks",
     "  companion -n, --npm            Run npm update tasks",
     "  companion -r, --rust           Run Rust update tasks",

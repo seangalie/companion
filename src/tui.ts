@@ -1,6 +1,5 @@
 import blessed from "blessed";
 
-import { runCommandInteractive } from "./command";
 import { collectSnapshot, getFastfetchOutput } from "./system";
 import { runTasks } from "./runner";
 import type { RunnerEvent, SystemSnapshot, TaskDefinition, TaskResult, TaskState, TaskStatus } from "./types";
@@ -55,14 +54,6 @@ class CompanionTui {
   private readonly overlayBox: blessed.Widgets.BoxElement;
   private readonly overlayContent: blessed.Widgets.BoxElement;
   private readonly overlayFooter: blessed.Widgets.BoxElement;
-  private readonly promptBackdrop: blessed.Widgets.BoxElement;
-  private readonly promptBox: blessed.Widgets.BoxElement;
-  private readonly promptStatusBox: blessed.Widgets.BoxElement;
-  private readonly promptMessageBox: blessed.Widgets.BoxElement;
-  private readonly promptInputFrame: blessed.Widgets.BoxElement;
-  private readonly promptInput: blessed.Widgets.TextboxElement;
-  private readonly promptOutputBox: blessed.Widgets.BoxElement;
-  private readonly promptFooterBox: blessed.Widgets.BoxElement;
   private readonly rows: TaskRow[];
 
   private mode: ScreenMode = "select";
@@ -79,10 +70,6 @@ class CompanionTui {
   private fastfetchVisible = false;
   private fastfetchLoading = false;
   private fastfetchError?: string;
-  private promptVisible = false;
-  private promptInputActive = false;
-  private promptMessage = "";
-  private promptSecret = false;
   private spinnerIndex = 0;
   private readonly spinnerFrames = ["-", "\\", "|", "/"];
   private resolveExit?: () => void;
@@ -161,89 +148,6 @@ class CompanionTui {
       }
     });
 
-    this.promptBackdrop = blessed.box({
-      parent: this.screen,
-      hidden: true,
-      style: {
-        bg: "#050C14"
-      }
-    });
-
-    this.promptBox = this.createOverlayPanel(" Action Required ");
-    this.promptBox.hide();
-
-    this.promptStatusBox = blessed.box({
-      parent: this.promptBox,
-      tags: true,
-      style: {
-        fg: palette.warning
-      }
-    });
-
-    this.promptMessageBox = blessed.box({
-      parent: this.promptBox,
-      tags: true,
-      style: {
-        fg: palette.text
-      }
-    });
-
-    this.promptInputFrame = blessed.box({
-      parent: this.promptBox,
-      tags: true,
-      border: "line",
-      label: this.renderPanelLabel(" Input "),
-      style: {
-        fg: palette.text,
-        border: {
-          fg: palette.border
-        }
-      },
-      padding: {
-        left: 1,
-        right: 1
-      }
-    });
-
-    this.promptInput = blessed.textbox({
-      parent: this.promptInputFrame,
-      keys: true,
-      mouse: true,
-      style: {
-        fg: palette.text,
-        bg: palette.shell,
-        border: {
-          fg: palette.border
-        }
-      },
-      censor: true
-    });
-
-    this.promptOutputBox = blessed.box({
-      parent: this.promptBox,
-      tags: true,
-      border: "line",
-      label: this.renderPanelLabel(" Recent Output "),
-      style: {
-        fg: palette.text,
-        border: {
-          fg: palette.separator
-        }
-      },
-      padding: {
-        left: 1,
-        right: 1
-      }
-    });
-
-    this.promptFooterBox = blessed.box({
-      parent: this.promptBox,
-      tags: true,
-      style: {
-        fg: palette.muted
-      }
-    });
-
     this.registerKeys();
     this.screen.on("resize", () => this.render());
 
@@ -303,17 +207,6 @@ class CompanionTui {
     this.screen.key(["C-c"], () => this.exit());
 
     this.screen.key(["q"], () => {
-      if (this.promptVisible && this.promptInputActive) {
-        return;
-      }
-
-      if (this.promptVisible && this.mode === "running") {
-        this.abortController?.abort();
-        this.statusMessage = "Cancellation requested. Waiting for the active task to stop...";
-        this.render();
-        return;
-      }
-
       if (this.fastfetchVisible) {
         this.exit();
         return;
@@ -330,10 +223,6 @@ class CompanionTui {
     });
 
     this.screen.key(["up", "k"], () => {
-      if (this.promptVisible) {
-        return;
-      }
-
       if (this.fastfetchVisible) {
         this.overlayContent.scroll(-1);
         this.screen.render();
@@ -349,10 +238,6 @@ class CompanionTui {
     });
 
     this.screen.key(["down", "j"], () => {
-      if (this.promptVisible) {
-        return;
-      }
-
       if (this.fastfetchVisible) {
         this.overlayContent.scroll(1);
         this.screen.render();
@@ -368,10 +253,6 @@ class CompanionTui {
     });
 
     this.screen.key(["pageup"], () => {
-      if (this.promptVisible) {
-        return;
-      }
-
       if (!this.fastfetchVisible) {
         return;
       }
@@ -381,10 +262,6 @@ class CompanionTui {
     });
 
     this.screen.key(["pagedown"], () => {
-      if (this.promptVisible) {
-        return;
-      }
-
       if (!this.fastfetchVisible) {
         return;
       }
@@ -394,10 +271,6 @@ class CompanionTui {
     });
 
     this.screen.key(["g"], () => {
-      if (this.promptVisible) {
-        return;
-      }
-
       if (!this.fastfetchVisible) {
         return;
       }
@@ -407,10 +280,6 @@ class CompanionTui {
     });
 
     this.screen.key(["G"], () => {
-      if (this.promptVisible) {
-        return;
-      }
-
       if (!this.fastfetchVisible) {
         return;
       }
@@ -420,7 +289,7 @@ class CompanionTui {
     });
 
     this.screen.key(["space"], () => {
-      if (this.promptVisible || this.fastfetchVisible || this.mode !== "select") {
+      if (this.fastfetchVisible || this.mode !== "select") {
         return;
       }
 
@@ -434,7 +303,7 @@ class CompanionTui {
     });
 
     this.screen.key(["a"], () => {
-      if (this.promptVisible || this.fastfetchVisible || this.mode !== "select") {
+      if (this.fastfetchVisible || this.mode !== "select") {
         return;
       }
 
@@ -452,10 +321,6 @@ class CompanionTui {
     });
 
     this.screen.key(["enter"], async () => {
-      if (this.promptVisible) {
-        return;
-      }
-
       if (this.fastfetchVisible) {
         this.fastfetchVisible = false;
         this.render();
@@ -477,10 +342,6 @@ class CompanionTui {
     });
 
     this.screen.key(["r"], async () => {
-      if (this.promptVisible) {
-        return;
-      }
-
       if (this.fastfetchVisible) {
         await this.refreshFastfetch();
         return;
@@ -497,10 +358,6 @@ class CompanionTui {
     });
 
     this.screen.key(["f"], async () => {
-      if (this.promptVisible) {
-        return;
-      }
-
       this.fastfetchVisible = !this.fastfetchVisible;
       if (this.fastfetchVisible) {
         await this.refreshFastfetch();
@@ -510,10 +367,6 @@ class CompanionTui {
     });
 
     this.screen.key(["c"], () => {
-      if (this.promptVisible) {
-        return;
-      }
-
       if (!this.fastfetchVisible) {
         return;
       }
@@ -590,9 +443,6 @@ class CompanionTui {
       (event) => {
         this.applyRunnerEvent(event);
         this.render();
-      },
-      {
-        runCommandInteractive: (command, args = []) => this.runInteractiveCommand(command, args)
       }
     );
 
@@ -747,109 +597,6 @@ class CompanionTui {
       );
     } else {
       this.overlayBox.hide();
-    }
-
-    if (this.promptVisible) {
-      this.promptBackdrop.show();
-      this.promptBackdrop.top = 0;
-      this.promptBackdrop.left = 0;
-      this.promptBackdrop.width = width;
-      this.promptBackdrop.height = height;
-      this.promptBackdrop.setFront();
-
-      this.promptBox.show();
-      const promptWidth = Math.max(58, Math.min(width - 8, 88));
-      const promptInnerWidth = Math.max(1, promptWidth - 2);
-      const promptMessageText = this.promptInputActive
-        ? this.promptMessage
-        : `Companion is monitoring ${this.getActiveTaskTitle()} for a credential request. Recent output from the running command is shown below.`;
-      const promptStatusLines = [
-        this.tagFg(
-          `${this.spinnerFrames[this.spinnerIndex]} Waiting on ${this.getActiveTaskTitle()} to continue`,
-          palette.warning
-        ),
-        this.tagFg(
-          this.promptInputActive
-            ? "The update queue is paused until you respond to this prompt."
-            : "The update queue is paused while Companion waits for the command to ask for input.",
-          palette.muted
-        )
-      ];
-      const promptMessageLines = wrapText(promptMessageText, Math.max(1, promptInnerWidth - 2));
-      const outputHeight = Math.min(7, Math.max(5, Math.floor(height / 4)));
-      const promptOutputWidth = Math.max(1, promptInnerWidth - 4);
-      const promptOutputLines = this.getPromptOutputLines(promptOutputWidth, Math.max(1, outputHeight - 2));
-      const promptFooter = this.promptInputActive
-        ? this.renderFooterLine([
-            { command: "enter", description: "submit" },
-            { command: "esc", description: "cancel" }
-          ])
-        : this.renderFooterLine([{ command: "q", description: "cancel current run" }]);
-      const inputHeight = 4;
-      const promptHeight = Math.max(18, promptStatusLines.length + promptMessageLines.length + outputHeight + inputHeight + 5);
-      const promptLeft = Math.max(0, Math.floor((width - promptWidth) / 2));
-      const promptTop = Math.max(0, Math.floor((height - promptHeight) / 2));
-      let cursorTop = 1;
-
-      this.promptBox.top = promptTop;
-      this.promptBox.left = promptLeft;
-      this.promptBox.width = promptWidth;
-      this.promptBox.height = promptHeight;
-      this.promptBox.setFront();
-
-      this.promptStatusBox.top = cursorTop;
-      this.promptStatusBox.left = 1;
-      this.promptStatusBox.width = Math.max(1, promptInnerWidth);
-      this.promptStatusBox.height = promptStatusLines.length;
-      this.promptStatusBox.setContent(promptStatusLines.join("\n"));
-      cursorTop += promptStatusLines.length + 1;
-
-      this.promptMessageBox.top = cursorTop;
-      this.promptMessageBox.left = 1;
-      this.promptMessageBox.width = Math.max(1, promptInnerWidth);
-      this.promptMessageBox.height = Math.max(1, promptMessageLines.length);
-      this.promptMessageBox.setContent(promptMessageLines.join("\n"));
-      cursorTop += promptMessageLines.length + 1;
-
-      this.promptInputFrame.top = cursorTop;
-      this.promptInputFrame.left = 1;
-      this.promptInputFrame.width = Math.max(1, promptInnerWidth);
-      this.promptInputFrame.height = 3;
-      this.promptInput.top = 0;
-      this.promptInput.left = 0;
-      this.promptInput.width = Math.max(1, promptInnerWidth - 4);
-      this.promptInput.height = 1;
-      this.promptInput.secret = this.promptSecret;
-      this.promptInput.censor = this.promptSecret;
-      if (this.promptInputActive) {
-        this.promptInputFrame.setLabel(this.renderPanelLabel(" Input "));
-        this.promptInputFrame.show();
-        this.promptInput.show();
-        this.promptInput.setValue(this.promptInput.getValue());
-        cursorTop += 4;
-      } else {
-        this.promptInputFrame.setLabel(this.renderPanelLabel(" Waiting For Prompt "));
-        this.promptInputFrame.show();
-        this.promptInput.hide();
-        cursorTop += 4;
-      }
-
-      this.promptOutputBox.top = cursorTop;
-      this.promptOutputBox.left = 1;
-      this.promptOutputBox.width = Math.max(1, promptInnerWidth);
-      this.promptOutputBox.height = outputHeight;
-      this.promptOutputBox.setContent(promptOutputLines.join("\n"));
-
-      this.promptFooterBox.top = promptHeight - 2;
-      this.promptFooterBox.left = 1;
-      this.promptFooterBox.width = Math.max(1, promptInnerWidth);
-      this.promptFooterBox.height = 1;
-      this.promptFooterBox.setContent(promptFooter);
-    } else {
-      this.promptBackdrop.hide();
-      this.promptBox.hide();
-      this.promptInputFrame.hide();
-      this.promptInput.hide();
     }
 
     this.screen.render();
@@ -1103,94 +850,6 @@ class CompanionTui {
     }
   }
 
-  private getActiveTaskTitle(): string {
-    if (!this.currentTaskId) {
-      return "the active task";
-    }
-
-    return this.findRow(this.currentTaskId).state.definition.title;
-  }
-
-  private getPromptOutputLines(innerWidth: number, maxLines: number): string[] {
-    const lines = this.logs
-      .slice(-maxLines)
-      .map((line) => truncate(line, innerWidth));
-
-    if (lines.length > 0) {
-      return lines;
-    }
-
-    return [this.tagFg("Waiting for additional command output...", palette.muted)];
-  }
-
-  private async runInteractiveCommand(command: string, args: string[]): Promise<void> {
-    if (!this.abortController) {
-      throw new Error("No active run is available.");
-    }
-
-    this.promptVisible = true;
-    this.promptInputActive = false;
-    this.promptMessage = "";
-    this.promptSecret = false;
-    this.promptInput.clearValue();
-    this.render();
-    await this.waitForRenderFrame();
-
-    try {
-      await runCommandInteractive(
-        {
-          command,
-          args
-        },
-        {
-          signal: this.abortController.signal,
-          onLine: (line) => {
-            this.appendLog(line);
-            this.render();
-          },
-          requestInput: ({ text, secret }) => this.requestPromptInput(text, secret)
-        }
-      );
-    } finally {
-      this.promptVisible = false;
-      this.promptInputActive = false;
-      this.promptMessage = "";
-      this.promptSecret = false;
-      this.promptInput.clearValue();
-      this.render();
-    }
-  }
-
-  private async requestPromptInput(text: string, secret: boolean): Promise<string> {
-    this.promptVisible = true;
-    this.promptInputActive = true;
-    this.promptMessage = text;
-    this.promptSecret = secret;
-    this.promptInput.clearValue();
-    this.render();
-    await this.waitForRenderFrame();
-
-    return await new Promise<string>((resolve, reject) => {
-      this.promptInput.focus();
-      this.promptInput.readInput((error, value) => {
-        this.promptInputActive = false;
-        this.promptMessage = error
-          ? "Interactive input was cancelled."
-          : "Input received. Waiting for the command to continue...";
-        this.promptSecret = false;
-        this.promptInput.clearValue();
-        this.render();
-
-        if (error) {
-          reject(new Error("Interactive input cancelled"));
-          return;
-        }
-
-        resolve(value ?? "");
-      });
-    });
-  }
-
   private findRow(taskId: string): TaskRow {
     const row = this.rows.find((entry) => entry.state.definition.id === taskId);
     if (!row) {
@@ -1209,10 +868,6 @@ class CompanionTui {
     this.abortController?.abort();
     this.screen.destroy();
     this.resolveExit?.();
-  }
-
-  private async waitForRenderFrame(): Promise<void> {
-    await new Promise<void>((resolve) => setImmediate(resolve));
   }
 }
 

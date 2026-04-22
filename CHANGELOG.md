@@ -11,8 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stopped the task details panel from showing the unavailable-task warning on every queue item after you attempted to toggle one unavailable task.
 - Fixed the full-screen system details overlay so its footer no longer collides with the bottom border and the right border renders correctly.
-- Kept App Store and macOS update credential prompts visible with a PTY-backed full-screen foreground overlay inside the TUI, including recent command output, while plain CLI mode still falls back to the foreground terminal.
-- Opened the action-required overlay before interactive commands begin waiting for credentials, improved prompt detection against the last live PTY line, and stabilized the nested input frame layout when the password field appears.
+
+### Changed
+
+- Removed the `mas upgrade` step from the default catalog, help text, and README for this release while the App Store credential flow is redesigned.
+- Returned the TUI to the standard three-pane interface for all update steps by removing the unfinished interactive prompt overlay path.
 
 ## [0.1.1] - 2026-04-21
 
@@ -22,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Added an explicit `mas` availability check for App Store upgrades so the task is clearly marked unavailable when the App Store CLI is not installed.
 - Added a Docker daemon availability check so container image refresh only becomes runnable when the Docker CLI is present and the engine is actually running.
 
 ## [0.1.0] - 2026-04-21
@@ -30,6 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Built Companion as a Node.js and TypeScript terminal app with a Blessed-based TUI and npm-ready package metadata.
-- Added a selectable update queue for MacOS software updates, App Store updates, Homebrew packages, npm, pipx, Rust, Composer, and Docker image refresh tasks.
+- Added a selectable update queue for MacOS software updates, Homebrew packages, npm, pipx, Rust, Composer, and Docker image refresh tasks.
 - Added plain command modes for `--auto`, category-based task execution, `--list-tasks`, and version/help output.
 - Added a live system snapshot plus an optional full-screen `fastfetch` overlay inside the TUI.

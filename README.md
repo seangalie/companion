@@ -10,7 +10,6 @@ flow into a cleaner, shareable Node.js-powered command.
 The default queue mirrors some common maintenance commands:
 
 - `softwareupdate -i -a`
-- `mas upgrade`
 - `brew update`
 - `brew upgrade`
 - `brew cleanup`
@@ -55,7 +54,7 @@ companion
 companion -h --help         # Display CLI usage help
 companion -v --version      # Display console version
 companion -a --auto         # Run entire task catalog
-companion -u --update       # Run software update and app store upgrade tasks
+companion -u --update       # Run macOS software update tasks
 companion -b --brew         # Run brew update, upgrade, and cleanup tasks
 companion -n --npm          # Run npm update tasks
 companion -r --rust         # Run rustup update tasks
@@ -68,8 +67,7 @@ companion -l --list-tasks
 
 - Some update commands may require elevated privileges depending on the machine state and the packages being updated.
 - `companion --auto` is useful when you want the same task catalog without the TUI.
-- Unavailable tools such as `brew`, `npm`, or `mas` are detected and clearly marked in the interface.
-- In the TUI, commands that prompt for credentials run through a PTY-backed full-screen foreground overlay with the prompt and recent command output so the request stays visible. In plain CLI mode, those commands use the foreground terminal.
+- Unavailable tools such as `brew`, `npm`, `pipx`, or `docker` are detected and clearly marked in the interface.
 - `fastfetch` is optional. If it is installed, press `f` in the TUI to open a full-screen hardware and system details view.
 - The Docker task refreshes images for currently running containers and reports that those containers should be recreated if the pulled image changed.
 - Docker refresh is only available when the Docker CLI is installed and the Docker daemon is running.
