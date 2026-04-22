@@ -51,16 +51,17 @@ npm link
 
 ```zsh
 companion
-companion -h --help         # Display CLI usage help
-companion -v --version      # Display console version
-companion -a --auto         # Run entire task catalog
-companion -u --update       # Run macOS software update tasks
-companion -b --brew         # Run brew update, upgrade, and cleanup tasks
-companion -n --npm          # Run npm update tasks
-companion -r --rust         # Run rustup update tasks
-companion -c --composer     # Run composer update tasks
-companion -d --docker       # Run docker container updates
-companion -l --list-tasks
+companion -h, --help         # Display CLI usage help
+companion -v, --version      # Display console version
+companion -a, --auto         # Run entire task catalog
+companion -u, --update       # Run macOS software update tasks
+companion -b, --brew         # Run brew update, upgrade, and cleanup tasks
+companion -n, --npm          # Run npm update tasks
+companion -p, --python       # Run Python (pipx) update tasks
+companion -r, --rust         # Run rustup update tasks
+companion -c, --composer     # Run composer update tasks
+companion -d, --docker       # Run docker container updates
+companion -l, --list-tasks
 ```
 
 ## Notes

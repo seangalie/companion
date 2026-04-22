@@ -72,6 +72,7 @@ class CompanionTui {
   private fastfetchError?: string;
   private spinnerIndex = 0;
   private readonly spinnerFrames = ["-", "\\", "|", "/"];
+  private spinnerTimer?: ReturnType<typeof setInterval>;
   private resolveExit?: () => void;
   private exited = false;
 
@@ -151,12 +152,13 @@ class CompanionTui {
     this.registerKeys();
     this.screen.on("resize", () => this.render());
 
-    setInterval(() => {
+    this.spinnerTimer = setInterval(() => {
       this.spinnerIndex = (this.spinnerIndex + 1) % this.spinnerFrames.length;
       if (this.snapshotLoading || this.fastfetchLoading || this.mode === "running") {
         this.render();
       }
-    }, 120).unref();
+    }, 120);
+    this.spinnerTimer.unref();
   }
 
   async run(): Promise<void> {
@@ -865,6 +867,7 @@ class CompanionTui {
     }
 
     this.exited = true;
+    clearInterval(this.spinnerTimer);
     this.abortController?.abort();
     this.screen.destroy();
     this.resolveExit?.();
