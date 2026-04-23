@@ -1,5 +1,6 @@
 export type TaskCategory =
   | "update"
+  | "mas"
   | "brew"
   | "npm"
   | "python"
@@ -33,6 +34,7 @@ export interface TaskState {
 export interface TaskRunContext {
   signal: AbortSignal;
   onOutput: (line: string) => void;
+  requestInput: (prompt: string, options?: { masked?: boolean }) => Promise<string>;
 }
 
 export interface TaskResult {

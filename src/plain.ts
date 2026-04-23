@@ -1,3 +1,5 @@
+import { createInterface } from "node:readline";
+
 import { collectSnapshot } from "./system";
 import type { TaskDefinition, TaskResult, TaskState } from "./types";
 import { formatDuration } from "./utils";
@@ -31,6 +33,39 @@ export async function runPlainMode(tasks: TaskDefinition[]): Promise<number> {
   const handleSigInt = () => controller.abort();
   process.once("SIGINT", handleSigInt);
 
+  const requestInput = async (prompt: string, options?: { masked?: boolean }): Promise<string> => {
+    const rl = createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    if (options?.masked) {
+      process.stdout.write(prompt + " ");
+      const original = (rl as any)._writeToOutput;
+      (rl as any)._writeToOutput = (str: string) => {
+        const clean = str.replace(/\r?\n/g, "");
+        if (clean.length > 0) {
+          process.stdout.write("*".repeat(clean.length));
+        }
+      };
+      return await new Promise<string>((resolve) => {
+        rl.question("", (answer) => {
+          (rl as any)._writeToOutput = original;
+          process.stdout.write("\n");
+          rl.close();
+          resolve(answer);
+        });
+      });
+    }
+
+    return await new Promise<string>((resolve) => {
+      rl.question(prompt + " ", (answer) => {
+        rl.close();
+        resolve(answer);
+      });
+    });
+  };
+
   let results: TaskResult[] = [];
 
   results = await runTasks(
@@ -53,7 +88,8 @@ export async function runPlainMode(tasks: TaskDefinition[]): Promise<number> {
           results = event.results;
           break;
       }
-    }
+    },
+    requestInput
   );
 
   process.removeListener("SIGINT", handleSigInt);

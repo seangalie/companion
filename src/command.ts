@@ -20,6 +20,7 @@ export async function runCommandStreaming(
   options: {
     signal: AbortSignal;
     onLine: (line: string) => void;
+    stdinInput?: string;
   }
 ): Promise<void> {
   const { command, args = [] } = spec;
@@ -27,8 +28,13 @@ export async function runCommandStreaming(
   await new Promise<void>((resolve, reject) => {
     const child = spawn(command, args, {
       env: process.env,
-      stdio: ["ignore", "pipe", "pipe"]
+      stdio: [options.stdinInput !== undefined ? "pipe" : "ignore", "pipe", "pipe"]
     });
+
+    if (options.stdinInput !== undefined && child.stdin) {
+      child.stdin.write(options.stdinInput + "\n");
+      child.stdin.end();
+    }
 
     let settled = false;
     let stdoutBuffer = "";
@@ -78,12 +84,12 @@ export async function runCommandStreaming(
 
     options.signal.addEventListener("abort", abortHandler);
 
-    child.stdout.on("data", (chunk: Buffer | string) => {
+    child.stdout!.on("data", (chunk: Buffer | string) => {
       stdoutBuffer += chunk.toString();
       stdoutBuffer = flushBuffer(stdoutBuffer);
     });
 
-    child.stderr.on("data", (chunk: Buffer | string) => {
+    child.stderr!.on("data", (chunk: Buffer | string) => {
       stderrBuffer += chunk.toString();
       stderrBuffer = flushBuffer(stderrBuffer);
     });

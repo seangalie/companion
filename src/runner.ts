@@ -3,7 +3,8 @@ import type { RunnerEvent, TaskDefinition, TaskResult, TaskStatus } from "./type
 export async function runTasks(
   tasks: TaskDefinition[],
   signal: AbortSignal,
-  onEvent: (event: RunnerEvent) => void
+  onEvent: (event: RunnerEvent) => void,
+  requestInput?: (prompt: string, options?: { masked?: boolean }) => Promise<string>
 ): Promise<TaskResult[]> {
   const results: TaskResult[] = [];
 
@@ -23,6 +24,10 @@ export async function runTasks(
     let status: TaskStatus = "success";
     let error: Error | undefined;
 
+    const defaultRequestInput = async () => {
+      throw new Error("This task requires input but no input handler was provided");
+    };
+
     try {
       await task.run({
         signal,
@@ -32,7 +37,8 @@ export async function runTasks(
             task,
             line
           });
-        }
+        },
+        requestInput: requestInput ?? defaultRequestInput
       });
     } catch (caught) {
       error = caught instanceof Error ? caught : new Error(String(caught));

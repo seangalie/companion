@@ -16,6 +16,8 @@ function makeTask(id: string, behavior: (onOutput: (line: string) => void) => Pr
   };
 }
 
+const noopRequestInput = async () => "";
+
 describe("runTasks", () => {
   it("runs tasks sequentially and emits events", async () => {
     const events: RunnerEvent[] = [];

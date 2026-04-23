@@ -48,6 +48,8 @@ describe("parseArgs", () => {
     const flags: [string, string][] = [
       ["-u", "update"],
       ["--update", "update"],
+      ["-m", "mas"],
+      ["--mas", "mas"],
       ["-b", "brew"],
       ["--brew", "brew"],
       ["-n", "npm"],
@@ -82,6 +84,7 @@ describe("helpText", () => {
   it("includes all category flags", () => {
     const text = helpText();
     expect(text).toContain("--update");
+    expect(text).toContain("--mas");
     expect(text).toContain("--brew");
     expect(text).toContain("--npm");
     expect(text).toContain("--python");

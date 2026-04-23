@@ -124,6 +124,30 @@ const dockerRefreshTask: TaskDefinition = {
   }
 };
 
+const masUpgradeTask: TaskDefinition = {
+  id: "mas-upgrade",
+  title: "Mac App Store upgrades",
+  summary: "Upgrades all installed Mac App Store applications. Requires your macOS account password to authorize updates.",
+  categories: ["mas"],
+  defaultSelected: true,
+  commandLabel: "mas upgrade",
+  checkAvailability: () => requiresCommands("mas"),
+  run: async ({ signal, onOutput, requestInput }) => {
+    const password = await requestInput("Enter your macOS account password for App Store updates:", { masked: true });
+    await runCommandStreaming(
+      {
+        command: "mas",
+        args: ["upgrade"]
+      },
+      {
+        signal,
+        onLine: onOutput,
+        stdinInput: password
+      }
+    );
+  }
+};
+
 const catalog: TaskDefinition[] = [
   shellTask({
     id: "softwareupdate",
@@ -135,6 +159,7 @@ const catalog: TaskDefinition[] = [
     args: ["-i", "-a"],
     requirements: ["softwareupdate"]
   }),
+  masUpgradeTask,
   shellTask({
     id: "brew-update",
     title: "Homebrew metadata",

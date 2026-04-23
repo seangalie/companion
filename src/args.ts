@@ -3,6 +3,8 @@ import type { ParsedArgs, TaskCategory } from "./types";
 const categoryFlags: Record<string, TaskCategory> = {
   "-u": "update",
   "--update": "update",
+  "-m": "mas",
+  "--mas": "mas",
   "-b": "brew",
   "--brew": "brew",
   "-n": "npm",
@@ -68,6 +70,7 @@ export function helpText(): string {
     "  companion -v, --version        Display console version",
     "  companion -a, --auto           Run entire task catalog",
     "  companion -u, --update         Run macOS software update tasks",
+    "  companion -m, --mas            Run Mac App Store upgrade tasks",
     "  companion -b, --brew           Run brew update, upgrade, and cleanup tasks",
     "  companion -n, --npm            Run npm update tasks",
     "  companion -p, --python         Run Python (pipx) update tasks",

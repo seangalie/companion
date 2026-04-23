@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-04-23
+
+### Added
+
+- Re-added `mas upgrade` (Mac App Store upgrades) to the task catalog, positioned between macOS software updates and Homebrew steps.
+- Added a `requestInput` mechanism to the task run context so tasks can prompt the user for credentials during execution.
+- Added a masked password input overlay in the TUI that appears when a task requests input.
+- Added masked password input in plain CLI mode using readline with character censoring.
+- Added a `--mas` / `-m` CLI flag for running Mac App Store upgrade tasks independently.
+- Added `stdinInput` support to `runCommandStreaming` for piping input to child processes.
+
 ## [0.1.3] - 2026-04-21
 
 ### Added

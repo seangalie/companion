@@ -54,6 +54,10 @@ class CompanionTui {
   private readonly overlayBox: blessed.Widgets.BoxElement;
   private readonly overlayContent: blessed.Widgets.BoxElement;
   private readonly overlayFooter: blessed.Widgets.BoxElement;
+  private readonly inputBox: blessed.Widgets.BoxElement;
+  private readonly inputLabel: blessed.Widgets.BoxElement;
+  private readonly inputField: blessed.Widgets.TextboxElement;
+  private readonly inputFooter: blessed.Widgets.BoxElement;
   private readonly rows: TaskRow[];
 
   private mode: ScreenMode = "select";
@@ -143,6 +147,47 @@ class CompanionTui {
 
     this.overlayFooter = blessed.box({
       parent: this.overlayBox,
+      tags: true,
+      style: {
+        fg: palette.muted
+      }
+    });
+
+    this.inputBox = blessed.box({
+      parent: this.screen,
+      tags: true,
+      border: "line",
+      label: this.renderPanelLabel(" Password Required "),
+      style: {
+        fg: palette.text,
+        border: {
+          fg: palette.border
+        }
+      }
+    });
+    this.inputBox.hide();
+
+    this.inputLabel = blessed.box({
+      parent: this.inputBox,
+      tags: true,
+      style: {
+        fg: palette.text
+      }
+    });
+
+    this.inputField = blessed.textbox({
+      parent: this.inputBox,
+      tags: true,
+      censor: true,
+      inputOnFocus: true,
+      style: {
+        fg: palette.titleFg,
+        bg: palette.titleBg
+      }
+    });
+
+    this.inputFooter = blessed.box({
+      parent: this.inputBox,
       tags: true,
       style: {
         fg: palette.muted
@@ -445,7 +490,8 @@ class CompanionTui {
       (event) => {
         this.applyRunnerEvent(event);
         this.render();
-      }
+      },
+      (prompt, options) => this.showInputPrompt(prompt, options)
     );
 
     this.abortController = undefined;
@@ -459,6 +505,56 @@ class CompanionTui {
         : `Update run finished with ${failures} failed task(s).`;
 
     this.render();
+  }
+
+  private async showInputPrompt(prompt: string, options?: { masked?: boolean }): Promise<string> {
+    const width = this.screen.width as number;
+    const height = this.screen.height as number;
+    const boxWidth = Math.min(60, width - 4);
+    const boxHeight = 7;
+    const boxLeft = Math.floor((width - boxWidth) / 2);
+    const boxTop = Math.floor((height - boxHeight) / 2);
+
+    this.inputBox.left = boxLeft;
+    this.inputBox.top = boxTop;
+    this.inputBox.width = boxWidth;
+    this.inputBox.height = boxHeight;
+    this.inputBox.show();
+    this.inputBox.setFront();
+
+    const innerWidth = Math.max(1, boxWidth - 4);
+    this.inputLabel.left = 1;
+    this.inputLabel.top = 0;
+    this.inputLabel.width = innerWidth;
+    this.inputLabel.height = 1;
+    this.inputLabel.setContent(prompt);
+
+    this.inputField.left = 1;
+    this.inputField.top = 2;
+    this.inputField.width = innerWidth;
+    this.inputField.height = 1;
+    this.inputField.censor = options?.masked !== false;
+    this.inputField.setValue("");
+
+    this.inputFooter.left = 1;
+    this.inputFooter.top = 4;
+    this.inputFooter.width = innerWidth;
+    this.inputFooter.height = 1;
+    this.inputFooter.setContent(
+      `${this.tagFg("enter", palette.command)} ${this.tagFg("submit", palette.muted)}`
+    );
+
+    this.screen.render();
+    this.inputField.focus();
+    this.inputField.readInput();
+
+    return await new Promise<string>((resolve) => {
+      this.inputField.once("submit", (value: string) => {
+        this.inputBox.hide();
+        this.render();
+        resolve(value ?? "");
+      });
+    });
   }
 
   private applyRunnerEvent(event: RunnerEvent): void {
