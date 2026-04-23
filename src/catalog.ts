@@ -127,21 +127,26 @@ const dockerRefreshTask: TaskDefinition = {
 const masUpgradeTask: TaskDefinition = {
   id: "mas-upgrade",
   title: "Mac App Store upgrades",
-  summary: "Upgrades all installed Mac App Store applications. Requires your macOS account password to authorize updates.",
+  summary: "Upgrades all installed Mac App Store applications. Requires your macOS account password to authorize updates via sudo.",
   categories: ["mas"],
   defaultSelected: true,
-  commandLabel: "mas upgrade",
+  commandLabel: "sudo mas upgrade",
   checkAvailability: () => requiresCommands("mas"),
   run: async ({ signal, onOutput, requestInput }) => {
-    const password = await requestInput("Enter your macOS account password for App Store updates:", { masked: true });
+    const password = await requestInput("Enter your macOS password for sudo:", { masked: true });
     await runCommandStreaming(
       {
-        command: "mas",
-        args: ["upgrade"]
+        command: "sudo",
+        args: ["-S", "mas", "upgrade"]
       },
       {
         signal,
-        onLine: onOutput,
+        onLine: (line) => {
+          if (/^Password:\s*$/.test(line) || /^Sorry, try again\.\s*$/.test(line)) {
+            return;
+          }
+          onOutput(line);
+        },
         stdinInput: password
       }
     );
