@@ -38,6 +38,67 @@ run_step() {
     fi
 }
 
+INSTALL_DIR="${COMPANION_INSTALL_DIR:-$HOME/.local/bin}"
+INSTALL_NAME="companion"
+
+usage() {
+    cat <<EOF
+macOS Companion v${VERSION}
+
+Usage:
+  companion.sh            Run all update tasks
+  companion.sh --install  Install a copy to ${INSTALL_DIR}/${INSTALL_NAME}
+  companion.sh --help     Show this help
+
+Environment:
+  COMPANION_INSTALL_DIR   Override the install directory (default: ~/.local/bin)
+EOF
+}
+
+install_self() {
+    local src
+    src="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+    local dest="${INSTALL_DIR}/${INSTALL_NAME}"
+
+    step "Installing ${INSTALL_NAME} to ${dest}"
+
+    mkdir -p "${INSTALL_DIR}"
+    cp "${src}" "${dest}"
+    chmod +x "${dest}"
+
+    printf "Installed: %s\n" "${dest}"
+
+    case ":${PATH}:" in
+        *":${INSTALL_DIR}:"*)
+            printf "%s is already on your PATH — run '%s' from anywhere.\n" \
+                "${INSTALL_DIR}" "${INSTALL_NAME}"
+            ;;
+        *)
+            warn "${INSTALL_DIR} is not on your PATH"
+            printf "Add it by appending this to your shell profile:\n\n  export PATH=\"%s:\$PATH\"\n" \
+                "${INSTALL_DIR}"
+            ;;
+    esac
+}
+
+case "${1:-}" in
+    --install)
+        install_self
+        exit 0
+        ;;
+    -h|--help)
+        usage
+        exit 0
+        ;;
+    "")
+        ;;
+    *)
+        fail "Unknown option: $1"
+        usage
+        exit 2
+        ;;
+esac
+
 printf "%smacOS Companion v%s%s\n" "${BOLD}" "${VERSION}" "${RESET}"
 
 run_step "Installing macOS software updates" \

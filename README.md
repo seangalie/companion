@@ -37,6 +37,28 @@ From the repository directory:
 
 The script will prompt for your password when `sudo softwareupdate` runs.
 
+### Installing to your PATH
+
+To run `companion` from anywhere, install a copy to your local `bin`
+directory:
+
+```sh
+./companion.sh --install
+```
+
+By default this copies the script to `~/.local/bin/companion`. If that
+directory is not already on your `PATH`, the installer prints the line to
+add to your shell profile.
+
+Override the destination with the `COMPANION_INSTALL_DIR` environment
+variable:
+
+```sh
+COMPANION_INSTALL_DIR=/usr/local/bin ./companion.sh --install
+```
+
+Run `./companion.sh --help` for a full list of options.
+
 ## Versioning
 
 See [CHANGELOG.md](CHANGELOG.md) for release history. The project follows

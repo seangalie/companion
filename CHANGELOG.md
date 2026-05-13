@@ -15,5 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `brew update`
   - `brew upgrade`
   - `brew cleanup`
+- `--install` option that copies the script to `~/.local/bin/companion` (or
+  the directory set via `COMPANION_INSTALL_DIR`) and warns if the install
+  directory is not on `PATH`.
+- `--help` / `-h` option that prints usage information.
 - README section documenting what the script does, its requirements, and how
-  to run it.
+  to run and install it.
