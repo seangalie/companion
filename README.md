@@ -10,15 +10,16 @@ kicked off with a single command.
 The script runs the following tasks in order:
 
 1. `sudo softwareupdate -i -a` — install all available macOS software updates
-2. `npm update -g` — update globally installed npm packages
-3. `pipx upgrade-all` — upgrade all pipx-managed Python applications
-4. `rustup update` — update installed Rust toolchains
-5. `cargo install-update -a` — update all cargo-installed binaries (requires
+2. `mas upgrade` — upgrade Mac App Store apps via the [`mas`](https://github.com/mas-cli/mas) CLI
+3. `npm update -g` — update globally installed npm packages
+4. `pipx upgrade-all` — upgrade all pipx-managed Python applications
+5. `rustup update` — update installed Rust toolchains
+6. `cargo install-update -a` — update all cargo-installed binaries (requires
    the [`cargo-update`](https://crates.io/crates/cargo-update) crate)
-6. `composer global update` — update globally installed Composer packages
-7. `brew update` — refresh the local Homebrew formula and cask index
-8. `brew upgrade` — upgrade outdated Homebrew packages
-9. `brew cleanup` — remove outdated Homebrew downloads and stale versions
+7. `composer global update` — update globally installed Composer packages
+8. `brew update` — refresh the local Homebrew formula and cask index
+9. `brew upgrade` — upgrade outdated Homebrew packages
+10. `brew cleanup` — remove outdated Homebrew downloads and stale versions
 
 Steps that depend on a missing tool are skipped with a warning. Each step
 prints a clearly labeled header so progress is easy to follow.
@@ -30,6 +31,7 @@ prints a clearly labeled header so progress is easy to follow.
 - All other tools are optional — their steps are skipped when the command
   is not on `PATH`:
   - [Homebrew](https://brew.sh) for the `brew` steps
+  - [`mas`](https://github.com/mas-cli/mas) for `mas upgrade`
   - Node.js / npm for `npm update -g`
   - [pipx](https://pipx.pypa.io) for `pipx upgrade-all`
   - [rustup](https://rustup.rs) for `rustup update`

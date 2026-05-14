@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Additional update tasks, each gated on the underlying command being
   installed and skipped with a warning when it is not:
+  - `mas upgrade` (Mac App Store apps, via the [`mas`](https://github.com/mas-cli/mas) CLI)
   - `pipx upgrade-all`
   - `rustup update`
   - `cargo install-update -a` (from the `cargo-update` crate)

@@ -136,6 +136,13 @@ printf "%smacOS Companion v%s%s\n" "${BOLD}" "${VERSION}" "${RESET}"
 run_step "Installing macOS software updates" \
     sudo softwareupdate -i -a || true
 
+if command -v mas >/dev/null 2>&1; then
+    run_step "Updating Mac App Store apps" \
+        mas upgrade || true
+else
+    warn "mas not found — skipping Mac App Store update"
+fi
+
 if command -v npm >/dev/null 2>&1; then
     run_step "Updating global npm packages" \
         npm update -g || true
