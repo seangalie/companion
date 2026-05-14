@@ -5,7 +5,7 @@
 
 set -u
 
-VERSION="1.0.1"
+VERSION="1.0.2"
 
 if [ "$(uname -s)" != "Darwin" ]; then
     printf "companion.sh only runs on macOS (detected: %s)\n" "$(uname -s)" >&2
@@ -141,6 +141,34 @@ if command -v npm >/dev/null 2>&1; then
         npm update -g || true
 else
     warn "npm not found — skipping global npm update"
+fi
+
+if command -v pipx >/dev/null 2>&1; then
+    run_step "Upgrading pipx packages" \
+        pipx upgrade-all || true
+else
+    warn "pipx not found — skipping pipx upgrade"
+fi
+
+if command -v rustup >/dev/null 2>&1; then
+    run_step "Updating Rust toolchains" \
+        rustup update || true
+else
+    warn "rustup not found — skipping Rust toolchain update"
+fi
+
+if command -v cargo-install-update >/dev/null 2>&1; then
+    run_step "Updating cargo-installed binaries" \
+        cargo install-update -a || true
+else
+    warn "cargo-install-update not found — skipping cargo binary updates"
+fi
+
+if command -v composer >/dev/null 2>&1; then
+    run_step "Updating global Composer packages" \
+        composer global update || true
+else
+    warn "composer not found — skipping Composer global update"
 fi
 
 if command -v brew >/dev/null 2>&1; then
