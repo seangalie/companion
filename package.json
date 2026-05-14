@@ -1,5 +1,5 @@
 {
-  "name": "companion",
+  "name": "@seangalie/companion",
   "version": "1.0.1",
   "description": "A terminal-based macOS update console that runs softwareupdate, npm, and Homebrew update tasks in sequence.",
   "bin": {
