@@ -15,11 +15,17 @@ fi
 GREEN="$(tput setaf 2 2>/dev/null || true)"
 YELLOW="$(tput setaf 3 2>/dev/null || true)"
 RED="$(tput setaf 1 2>/dev/null || true)"
+DIM="$(tput dim 2>/dev/null || true)"
 BOLD="$(tput bold 2>/dev/null || true)"
 RESET="$(tput sgr0 2>/dev/null || true)"
 
+COLS="$(tput cols 2>/dev/null || echo 60)"
+printf -v RULE '%*s' "${COLS}" ''
+RULE="${RULE// /─}"
+
 step() {
-    printf "\n%s==> %s%s\n" "${BOLD}${GREEN}" "$1" "${RESET}"
+    printf "\n%s%s%s\n" "${DIM}" "${RULE}" "${RESET}"
+    printf "%s==> %s%s\n" "${BOLD}${GREEN}" "$1" "${RESET}"
 }
 
 warn() {
@@ -27,7 +33,8 @@ warn() {
 }
 
 fail() {
-    printf "%sxx %s%s\n" "${RED}" "$1" "${RESET}"
+    printf "\n%s%s%s\n" "${RED}" "${RULE}" "${RESET}"
+    printf "%sxx %s%s\n" "${BOLD}${RED}" "$1" "${RESET}"
 }
 
 run_step() {

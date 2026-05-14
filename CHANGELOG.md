@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     [uv](https://docs.astral.sh/uv/)
   - `gh extension upgrade --all` — upgrade installed GitHub CLI extensions
 
+### Changed
+
+- Step headers are now preceded by a dim, terminal-width horizontal rule so
+  each task is easier to spot when scrolling back through output.
+- Failure messages are preceded by a red horizontal rule and printed in
+  bold red so errors stand out from surrounding command output.
+
 ## [1.0.2] - 2026-05-14
 
 ### Added
