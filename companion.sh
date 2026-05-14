@@ -5,7 +5,7 @@
 
 set -u
 
-VERSION="1.0.2"
+VERSION="1.0.3"
 
 if [ "$(uname -s)" != "Darwin" ]; then
     printf "companion.sh only runs on macOS (detected: %s)\n" "$(uname -s)" >&2
@@ -143,6 +143,13 @@ else
     warn "mas not found — skipping Mac App Store update"
 fi
 
+if command -v mise >/dev/null 2>&1; then
+    run_step "Upgrading mise-managed tools" \
+        mise upgrade || true
+else
+    warn "mise not found — skipping mise upgrade"
+fi
+
 if command -v npm >/dev/null 2>&1; then
     run_step "Updating global npm packages" \
         npm update -g || true
@@ -155,6 +162,13 @@ if command -v pipx >/dev/null 2>&1; then
         pipx upgrade-all || true
 else
     warn "pipx not found — skipping pipx upgrade"
+fi
+
+if command -v uv >/dev/null 2>&1; then
+    run_step "Upgrading uv-installed tools" \
+        uv tool upgrade --all || true
+else
+    warn "uv not found — skipping uv tool upgrade"
 fi
 
 if command -v rustup >/dev/null 2>&1; then
@@ -176,6 +190,13 @@ if command -v composer >/dev/null 2>&1; then
         composer global update || true
 else
     warn "composer not found — skipping Composer global update"
+fi
+
+if command -v gh >/dev/null 2>&1; then
+    run_step "Upgrading gh CLI extensions" \
+        gh extension upgrade --all || true
+else
+    warn "gh not found — skipping gh extension upgrade"
 fi
 
 if command -v brew >/dev/null 2>&1; then

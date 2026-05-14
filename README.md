@@ -11,15 +11,18 @@ The script runs the following tasks in order:
 
 1. `sudo softwareupdate -i -a` — install all available macOS software updates
 2. `mas upgrade` — upgrade Mac App Store apps via the [`mas`](https://github.com/mas-cli/mas) CLI
-3. `npm update -g` — update globally installed npm packages
-4. `pipx upgrade-all` — upgrade all pipx-managed Python applications
-5. `rustup update` — update installed Rust toolchains
-6. `cargo install-update -a` — update all cargo-installed binaries (requires
+3. `mise upgrade` — upgrade tools managed by [mise](https://mise.jdx.dev)
+4. `npm update -g` — update globally installed npm packages
+5. `pipx upgrade-all` — upgrade all pipx-managed Python applications
+6. `uv tool upgrade --all` — upgrade tools installed via [uv](https://docs.astral.sh/uv/)
+7. `rustup update` — update installed Rust toolchains
+8. `cargo install-update -a` — update all cargo-installed binaries (requires
    the [`cargo-update`](https://crates.io/crates/cargo-update) crate)
-7. `composer global update` — update globally installed Composer packages
-8. `brew update` — refresh the local Homebrew formula and cask index
-9. `brew upgrade` — upgrade outdated Homebrew packages
-10. `brew cleanup` — remove outdated Homebrew downloads and stale versions
+9. `composer global update` — update globally installed Composer packages
+10. `gh extension upgrade --all` — upgrade installed GitHub CLI extensions
+11. `brew update` — refresh the local Homebrew formula and cask index
+12. `brew upgrade` — upgrade outdated Homebrew packages
+13. `brew cleanup` — remove outdated Homebrew downloads and stale versions
 
 Steps that depend on a missing tool are skipped with a warning. Each step
 prints a clearly labeled header so progress is easy to follow.
@@ -32,12 +35,15 @@ prints a clearly labeled header so progress is easy to follow.
   is not on `PATH`:
   - [Homebrew](https://brew.sh) for the `brew` steps
   - [`mas`](https://github.com/mas-cli/mas) for `mas upgrade`
+  - [mise](https://mise.jdx.dev) for `mise upgrade`
   - Node.js / npm for `npm update -g`
   - [pipx](https://pipx.pypa.io) for `pipx upgrade-all`
+  - [uv](https://docs.astral.sh/uv/) for `uv tool upgrade --all`
   - [rustup](https://rustup.rs) for `rustup update`
   - [`cargo-update`](https://crates.io/crates/cargo-update) for
     `cargo install-update -a`
   - [Composer](https://getcomposer.org) for `composer global update`
+  - [GitHub CLI](https://cli.github.com) for `gh extension upgrade --all`
 
 ## Usage
 
