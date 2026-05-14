@@ -1,7 +1,7 @@
 {
   "name": "@seangalie/companion",
-  "version": "1.0.3",
-  "description": "A terminal-based macOS update console that runs softwareupdate, mas, mise, npm, pipx, uv, rustup, cargo, Composer, gh, and Homebrew update tasks in sequence.",
+  "version": "1.0.4",
+  "description": "A terminal-based macOS update console that runs softwareupdate, mas, mise, npm, pipx, uv, rustup, cargo, Composer, gh, Homebrew, and Docker image update tasks in sequence.",
   "bin": {
     "companion": "companion.sh"
   },

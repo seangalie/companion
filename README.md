@@ -23,6 +23,9 @@ The script runs the following tasks in order:
 11. `brew update` — refresh the local Homebrew formula and cask index
 12. `brew upgrade` — upgrade outdated Homebrew packages
 13. `brew cleanup` — remove outdated Homebrew downloads and stale versions
+14. `docker pull` for each local image — pull the latest version of every
+    image known to the Docker daemon (skipped when Docker is not installed
+    or the daemon is not running)
 
 Steps that depend on a missing tool are skipped with a warning. Each step
 prints a clearly labeled header so progress is easy to follow.
@@ -44,6 +47,8 @@ prints a clearly labeled header so progress is easy to follow.
     `cargo install-update -a`
   - [Composer](https://getcomposer.org) for `composer global update`
   - [GitHub CLI](https://cli.github.com) for `gh extension upgrade --all`
+  - [Docker](https://www.docker.com) for the Docker image pull step;
+    Docker Desktop itself is updated via the Homebrew cask step above
 
 ## Usage
 

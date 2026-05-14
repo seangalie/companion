@@ -5,7 +5,7 @@
 
 set -u
 
-VERSION="1.0.3"
+VERSION="1.0.4"
 
 if [ "$(uname -s)" != "Darwin" ]; then
     printf "companion.sh only runs on macOS (detected: %s)\n" "$(uname -s)" >&2
@@ -213,6 +213,30 @@ if command -v brew >/dev/null 2>&1; then
     run_step "Cleaning up Homebrew" brew cleanup || true
 else
     warn "brew not found — skipping Homebrew tasks"
+fi
+
+docker_pull_all_images() {
+    local images rc=0 image
+    images="$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -v '<none>' | sort -u)"
+    if [ -z "${images}" ]; then
+        printf "No Docker images to update.\n"
+        return 0
+    fi
+    while IFS= read -r image; do
+        docker pull "${image}" || rc=$?
+    done <<< "${images}"
+    return "${rc}"
+}
+
+if command -v docker >/dev/null 2>&1; then
+    if docker info >/dev/null 2>&1; then
+        run_step "Pulling latest Docker container images" \
+            docker_pull_all_images || true
+    else
+        warn "docker daemon not running — skipping Docker container updates"
+    fi
+else
+    warn "docker not found — skipping Docker container updates"
 fi
 
 step "All tasks have successfully completed."
