@@ -3,7 +3,7 @@
   "version": "1.0.2",
   "description": "A terminal-based macOS update console that runs softwareupdate, mas, npm, pipx, rustup, cargo, Composer, and Homebrew update tasks in sequence.",
   "bin": {
-    "companion": "./companion.sh"
+    "companion": "companion.sh"
   },
   "scripts": {
     "start": "./companion.sh"
