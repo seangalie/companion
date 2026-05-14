@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   each task is easier to spot when scrolling back through output.
 - Failure messages are preceded by a red horizontal rule and printed in
   bold red so errors stand out from surrounding command output.
+- "Tool not found" skip messages are preceded by a yellow horizontal rule
+  and printed in bold yellow, matching the step and failure formatting.
 
 ## [1.0.2] - 2026-05-14
 

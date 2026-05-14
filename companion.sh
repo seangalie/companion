@@ -29,7 +29,8 @@ step() {
 }
 
 warn() {
-    printf "%s!! %s%s\n" "${YELLOW}" "$1" "${RESET}"
+    printf "\n%s%s%s\n" "${YELLOW}" "${RULE}" "${RESET}"
+    printf "%s!! %s%s\n" "${BOLD}${YELLOW}" "$1" "${RESET}"
 }
 
 fail() {
