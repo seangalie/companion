@@ -19,5 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the directory set via `COMPANION_INSTALL_DIR`) and warns if the install
   directory is not on `PATH`.
 - `--help` / `-h` option that prints usage information.
+- macOS check at startup that exits with an error on non-Darwin systems.
+- `package.json` so the script can be distributed as a global npm package
+  (`npm install -g macos-companion`), with `"os": ["darwin"]` to block
+  non-macOS installs and a `bin` entry that exposes `companion` on `PATH`.
 - README section documenting what the script does, its requirements, and how
   to run and install it.

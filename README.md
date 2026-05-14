@@ -59,6 +59,24 @@ COMPANION_INSTALL_DIR=/usr/local/bin ./companion.sh --install
 
 Run `./companion.sh --help` for a full list of options.
 
+### Installing via npm
+
+The repository also ships with a `package.json` so it can be installed as
+a global npm package, which exposes `companion` on your `PATH`:
+
+```sh
+npm install -g macos-companion
+```
+
+Or directly from the repository:
+
+```sh
+npm install -g git+https://code.galie.io/seangalie/companion.git
+```
+
+The package is marked `"os": ["darwin"]`, so npm will refuse to install it
+on non-macOS systems.
+
 ## Versioning
 
 See [CHANGELOG.md](CHANGELOG.md) for release history. The project follows

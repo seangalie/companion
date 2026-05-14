@@ -7,6 +7,11 @@ set -u
 
 VERSION="1.0.1"
 
+if [ "$(uname -s)" != "Darwin" ]; then
+    printf "companion.sh only runs on macOS (detected: %s)\n" "$(uname -s)" >&2
+    exit 1
+fi
+
 GREEN="$(tput setaf 2 2>/dev/null || true)"
 YELLOW="$(tput setaf 3 2>/dev/null || true)"
 RED="$(tput setaf 1 2>/dev/null || true)"

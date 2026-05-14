@@ -1,0 +1,35 @@
+{
+  "name": "companion",
+  "version": "1.0.1",
+  "description": "A terminal-based macOS update console that runs softwareupdate, npm, and Homebrew update tasks in sequence.",
+  "bin": {
+    "companion": "./companion.sh"
+  },
+  "scripts": {
+    "start": "./companion.sh"
+  },
+  "files": [
+    "companion.sh",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "macos",
+    "update",
+    "homebrew",
+    "brew",
+    "softwareupdate",
+    "cli",
+    "shell"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "author": "Sean Galie",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://code.galie.io/seangalie/companion.git"
+  }
+}
