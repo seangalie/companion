@@ -92,7 +92,7 @@ The repository also ships with a `package.json` so it can be installed as
 a global npm package, which exposes `companion` on your `PATH`:
 
 ```sh
-npm install -g companion
+npm install -g @seangalie/companion
 ```
 
 Or directly from the repository:
