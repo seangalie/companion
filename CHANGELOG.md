@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--install` option that copies the script to `~/.local/bin/companion` (or
   the directory set via `COMPANION_INSTALL_DIR`) and warns if the install
   directory is not on `PATH`.
+- `--uninstall` option that removes the installed copy after a `[y/N]`
+  confirmation prompt.
 - `--help` / `-h` option that prints usage information.
 - macOS check at startup that exits with an error on non-Darwin systems.
 - `package.json` so the script can be distributed as a global npm package

@@ -51,9 +51,10 @@ usage() {
 macOS Companion v${VERSION}
 
 Usage:
-  companion.sh            Run all update tasks
-  companion.sh --install  Install a copy to ${INSTALL_DIR}/${INSTALL_NAME}
-  companion.sh --help     Show this help
+  companion.sh              Run all update tasks
+  companion.sh --install    Install a copy to ${INSTALL_DIR}/${INSTALL_NAME}
+  companion.sh --uninstall  Remove ${INSTALL_DIR}/${INSTALL_NAME}
+  companion.sh --help       Show this help
 
 Environment:
   COMPANION_INSTALL_DIR   Override the install directory (default: ~/.local/bin)
@@ -86,9 +87,35 @@ install_self() {
     esac
 }
 
+uninstall_self() {
+    local dest="${INSTALL_DIR}/${INSTALL_NAME}"
+
+    if [ ! -e "${dest}" ]; then
+        warn "Nothing to uninstall: ${dest} does not exist"
+        return 0
+    fi
+
+    printf "Remove %s? [y/N] " "${dest}"
+    local reply
+    read -r reply
+    case "${reply}" in
+        y|Y|yes|YES)
+            rm -f "${dest}"
+            step "Removed ${dest}"
+            ;;
+        *)
+            printf "Uninstall cancelled.\n"
+            ;;
+    esac
+}
+
 case "${1:-}" in
     --install)
         install_self
+        exit 0
+        ;;
+    --uninstall)
+        uninstall_self
         exit 0
         ;;
     -h|--help)

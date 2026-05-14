@@ -57,6 +57,15 @@ variable:
 COMPANION_INSTALL_DIR=/usr/local/bin ./companion.sh --install
 ```
 
+To remove an installed copy, run:
+
+```sh
+companion --uninstall
+```
+
+The uninstaller prompts for confirmation before deleting the file. It
+honours the same `COMPANION_INSTALL_DIR` override as `--install`.
+
 Run `./companion.sh --help` for a full list of options.
 
 ### Installing via npm
@@ -65,7 +74,7 @@ The repository also ships with a `package.json` so it can be installed as
 a global npm package, which exposes `companion` on your `PATH`:
 
 ```sh
-npm install -g macos-companion
+npm install -g companion
 ```
 
 Or directly from the repository:
