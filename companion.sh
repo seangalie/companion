@@ -5,7 +5,7 @@
 
 set -u
 
-VERSION="1.0.4"
+VERSION="1.1.0"
 
 if [ "$(uname -s)" != "Darwin" ]; then
     printf "companion.sh only runs on macOS (detected: %s)\n" "$(uname -s)" >&2
@@ -165,6 +165,34 @@ else
     warn "npm not found — skipping global npm update"
 fi
 
+if command -v deno >/dev/null 2>&1; then
+    run_step "Upgrading Deno runtime" \
+        deno upgrade || true
+else
+    warn "deno not found — skipping Deno upgrade"
+fi
+
+if command -v bun >/dev/null 2>&1; then
+    run_step "Updating global Bun packages" \
+        bun update -g || true
+else
+    warn "bun not found — skipping global Bun update"
+fi
+
+if command -v pnpm >/dev/null 2>&1; then
+    run_step "Updating global pnpm packages" \
+        pnpm update -g || true
+else
+    warn "pnpm not found — skipping global pnpm update"
+fi
+
+if command -v yarn >/dev/null 2>&1; then
+    run_step "Updating global Yarn packages" \
+        yarn global upgrade || true
+else
+    warn "yarn not found — skipping global Yarn update"
+fi
+
 if command -v pipx >/dev/null 2>&1; then
     run_step "Upgrading pipx packages" \
         pipx upgrade-all || true
@@ -205,6 +233,27 @@ if command -v gh >/dev/null 2>&1; then
         gh extension upgrade --all || true
 else
     warn "gh not found — skipping gh extension upgrade"
+fi
+
+if command -v code >/dev/null 2>&1; then
+    run_step "Updating VS Code extensions" \
+        code --update-extensions || true
+else
+    warn "code not found — skipping VS Code extension update"
+fi
+
+if command -v cursor >/dev/null 2>&1; then
+    run_step "Updating Cursor extensions" \
+        cursor --update-extensions || true
+else
+    warn "cursor not found — skipping Cursor extension update"
+fi
+
+if command -v tldr >/dev/null 2>&1; then
+    run_step "Updating tldr pages" \
+        tldr --update || true
+else
+    warn "tldr not found — skipping tldr update"
 fi
 
 if command -v brew >/dev/null 2>&1; then

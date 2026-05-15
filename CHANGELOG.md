@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-05-15
+
+### Added
+
+- Seven additional update tasks, each gated on the underlying command being
+  installed and skipped with a warning when it is not:
+  - `deno upgrade` — upgrade the [Deno](https://deno.com) runtime
+  - `bun update -g` — update globally installed [Bun](https://bun.sh) packages
+  - `pnpm update -g` — update globally installed
+    [pnpm](https://pnpm.io) packages
+  - `yarn global upgrade` — upgrade globally installed
+    [Yarn](https://classic.yarnpkg.com) packages
+  - `code --update-extensions` — update installed
+    [VS Code](https://code.visualstudio.com) extensions
+  - `cursor --update-extensions` — update installed
+    [Cursor](https://cursor.com) extensions
+  - `tldr --update` — refresh the cached [tldr](https://tldr.sh) pages
+
 ## [1.0.4] - 2026-05-14
 
 ### Added

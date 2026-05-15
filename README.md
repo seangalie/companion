@@ -13,17 +13,24 @@ The script runs the following tasks in order:
 2. `mas upgrade` — upgrade Mac App Store apps via the [`mas`](https://github.com/mas-cli/mas) CLI
 3. `mise upgrade` — upgrade tools managed by [mise](https://mise.jdx.dev)
 4. `npm update -g` — update globally installed npm packages
-5. `pipx upgrade-all` — upgrade all pipx-managed Python applications
-6. `uv tool upgrade --all` — upgrade tools installed via [uv](https://docs.astral.sh/uv/)
-7. `rustup update` — update installed Rust toolchains
-8. `cargo install-update -a` — update all cargo-installed binaries (requires
-   the [`cargo-update`](https://crates.io/crates/cargo-update) crate)
-9. `composer global update` — update globally installed Composer packages
-10. `gh extension upgrade --all` — upgrade installed GitHub CLI extensions
-11. `brew update` — refresh the local Homebrew formula and cask index
-12. `brew upgrade` — upgrade outdated Homebrew packages
-13. `brew cleanup` — remove outdated Homebrew downloads and stale versions
-14. `docker pull` for each local image — pull the latest version of every
+5. `deno upgrade` — upgrade the [Deno](https://deno.com) runtime
+6. `bun update -g` — update globally installed [Bun](https://bun.sh) packages
+7. `pnpm update -g` — update globally installed [pnpm](https://pnpm.io) packages
+8. `yarn global upgrade` — upgrade globally installed [Yarn](https://classic.yarnpkg.com) packages
+9. `pipx upgrade-all` — upgrade all pipx-managed Python applications
+10. `uv tool upgrade --all` — upgrade tools installed via [uv](https://docs.astral.sh/uv/)
+11. `rustup update` — update installed Rust toolchains
+12. `cargo install-update -a` — update all cargo-installed binaries (requires
+    the [`cargo-update`](https://crates.io/crates/cargo-update) crate)
+13. `composer global update` — update globally installed Composer packages
+14. `gh extension upgrade --all` — upgrade installed GitHub CLI extensions
+15. `code --update-extensions` — update installed [VS Code](https://code.visualstudio.com) extensions
+16. `cursor --update-extensions` — update installed [Cursor](https://cursor.com) extensions
+17. `tldr --update` — refresh the cached [tldr](https://tldr.sh) pages
+18. `brew update` — refresh the local Homebrew formula and cask index
+19. `brew upgrade` — upgrade outdated Homebrew packages
+20. `brew cleanup` — remove outdated Homebrew downloads and stale versions
+21. `docker pull` for each local image — pull the latest version of every
     image known to the Docker daemon (skipped when Docker is not installed
     or the daemon is not running)
 
@@ -40,6 +47,10 @@ prints a clearly labeled header so progress is easy to follow.
   - [`mas`](https://github.com/mas-cli/mas) for `mas upgrade`
   - [mise](https://mise.jdx.dev) for `mise upgrade`
   - Node.js / npm for `npm update -g`
+  - [Deno](https://deno.com) for `deno upgrade`
+  - [Bun](https://bun.sh) for `bun update -g`
+  - [pnpm](https://pnpm.io) for `pnpm update -g`
+  - [Yarn](https://classic.yarnpkg.com) for `yarn global upgrade`
   - [pipx](https://pipx.pypa.io) for `pipx upgrade-all`
   - [uv](https://docs.astral.sh/uv/) for `uv tool upgrade --all`
   - [rustup](https://rustup.rs) for `rustup update`
@@ -47,6 +58,9 @@ prints a clearly labeled header so progress is easy to follow.
     `cargo install-update -a`
   - [Composer](https://getcomposer.org) for `composer global update`
   - [GitHub CLI](https://cli.github.com) for `gh extension upgrade --all`
+  - [VS Code](https://code.visualstudio.com) for `code --update-extensions`
+  - [Cursor](https://cursor.com) for `cursor --update-extensions`
+  - [tldr](https://tldr.sh) for `tldr --update`
   - [Docker](https://www.docker.com) for the Docker image pull step;
     Docker Desktop itself is updated via the Homebrew cask step above
 
